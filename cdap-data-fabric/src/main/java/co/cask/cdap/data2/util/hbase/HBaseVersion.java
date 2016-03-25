@@ -34,6 +34,7 @@ public class HBaseVersion {
   private static final String HBASE_98_VERSION = "0.98";
   private static final String HBASE_10_VERSION = "1.0";
   private static final String HBASE_11_VERSION = "1.1";
+  private static final String HBASE_12_VERSION = "1.2";
   private static final String CDH55_CLASSIFIER = "cdh5.5";
   private static final String CDH56_CLASSIFIER = "cdh5.6";
   private static final String CDH_CLASSIFIER = "cdh";
@@ -89,7 +90,7 @@ public class HBaseVersion {
         } else {
           currentVersion = Version.HBASE_10;
         }
-      } else if (versionString.startsWith(HBASE_11_VERSION)) {
+      } else if (versionString.startsWith(HBASE_11_VERSION) || versionString.startsWith(HBASE_12_VERSION)) {
         currentVersion = Version.HBASE_11;
       } else {
         currentVersion = Version.UNKNOWN;
