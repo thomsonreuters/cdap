@@ -93,7 +93,7 @@ public class HBaseVersion {
       } else if (versionString.startsWith(HBASE_11_VERSION) || versionString.startsWith(HBASE_12_VERSION)) {
         currentVersion = Version.HBASE_11;
       } else {
-        currentVersion = Version.UNKNOWN;
+        currentVersion = Version.HBASE_11;
       }
     } catch (Throwable e) {
       // must be a class loading exception, HBase is not there

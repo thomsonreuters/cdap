@@ -44,6 +44,7 @@ import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -88,6 +89,6 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   @Override
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
-    return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
+    return getCliService().executeStatementAsync(sessionHandle, statement, new HashMap<String, String>());
   }
 }
