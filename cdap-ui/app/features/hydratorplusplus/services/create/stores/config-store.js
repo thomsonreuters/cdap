@@ -326,6 +326,9 @@ class HydratorPlusPlusConfigStore {
       let nodeConfig = this.HydratorPlusPlusPluginConfigFactory.generateNodeConfig(node._backendProperties, res);
       node.implicitSchema = nodeConfig.outputSchema.implicitSchema;
       node.outputSchemaProperty = nodeConfig.outputSchema.outputSchemaProperty;
+      if (nodeConfig.label) {
+        node.plugin.label = nodeConfig.label;
+      }
       if (angular.isArray(node.outputSchemaProperty)) {
         node.outputSchemaProperty = node.outputSchemaProperty[0];
         node.watchProperty = nodeConfig.outputSchema.schemaProperties['property-watch'];

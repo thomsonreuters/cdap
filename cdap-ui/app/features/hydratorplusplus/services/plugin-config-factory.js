@@ -66,9 +66,19 @@ class HydratorPlusPlusPluginConfigFactory {
   }
 
   generateNodeConfig(backendProperties, nodeConfig) {
-    var isNewSpecVersion = this.myHelpers.objectQuery(nodeConfig, 'metadata', 'spec-version');
-    if (isNewSpecVersion) {
-      return this.generateConfigForNewSpec(backendProperties, nodeConfig);
+    var isSpecVersion = this.myHelpers.objectQuery(nodeConfig, 'metadata', 'spec-version');
+    if (isSpecVersion) {
+      let specVersion = parseFloat(isSpecVersion, 10);
+      switch(specVersion) {
+        case 1.0:
+        case 1.1:
+          return this.generateConfigForNewSpec(backendProperties, nodeConfig);
+        case 2.0:
+        case 2.1:
+          let configJson = this.generateConfigForNewSpec(backendProperties, nodeConfig);
+          configJson.label = this.myHelpers.objectQuery(nodeConfig, 'metadata', 'label');
+          return configJson;
+      }
     } else {
       return this.generateConfigForOlderSpec(backendProperties, nodeConfig);
     }
