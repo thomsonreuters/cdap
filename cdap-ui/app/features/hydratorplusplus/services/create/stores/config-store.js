@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES){
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myPipelineApi){
     this.state = {};
     this.mySettings = mySettings;
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
@@ -30,6 +30,7 @@ class HydratorPlusPlusConfigStore {
     this.uuid = uuid;
     this.$state = $state;
     this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
+    this.myPipelineApi = myPipelineApi;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -47,6 +48,7 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onAddPostAction', this.addPostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onEditPostAction', this.editPostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onPreviewPipeline', this.previewPipeline.bind(this));
   }
   registerOnChangeListener(callback) {
     let index = this.changeListeners.push(callback);
@@ -737,8 +739,99 @@ class HydratorPlusPlusConfigStore {
         }
       );
   }
+
+  _fetchPreviewRecords(node, body, nodesMap, adjacencyMap) {
+
+    let params = {
+      namespace: this.$state.params.namespace,
+      artifactName: node.plugin.artifact.name,
+      artifactVersion: node.plugin.artifact.version,
+      pluginType: node.type,
+      pluginName: node.plugin.name,
+    };
+
+    if (this.GLOBALS.pluginConvert[node.type] === 'sink') {
+      let config = node;
+      config.previewData = {
+        inputRecord: body.inputRecord
+      };
+      this.editNodeProperties(config.name, config);
+      this.HydratorPlusPlusConsoleActions.addMessage({
+        type: 'success',
+        content: 'Successfully fetched preview data for ' + config.plugin.label
+      });
+
+      return;
+    }
+
+    this.myPipelineApi.preview(params, body)
+      .$promise
+      .then((res) => {
+        let config = node;
+        config.previewData = res[0];
+        if (body.inputRecord) {
+          config.previewData.inputRecord = body.inputRecord;
+        }
+
+        this.editNodeProperties(config.name, config);
+        this.HydratorPlusPlusConsoleActions.addMessage({
+          type: 'success',
+          content: 'Successfully fetched preview data for ' + config.plugin.label
+        });
+
+        if (adjacencyMap[config.name]) {
+          angular.forEach(adjacencyMap[config.name], (nodeId) => {
+            let previewConfig = {
+              inputSchema: config.previewData.outputSchema,
+              inputRecord: config.previewData.outputRecord,
+              properties: nodesMap[nodeId].plugin.properties
+            };
+
+            this._fetchPreviewRecords(nodesMap[nodeId], previewConfig, nodesMap, adjacencyMap);
+          });
+        }
+
+      }, (err) => {
+        this.HydratorPlusPlusConsoleActions.addMessage({
+          type: 'error',
+          content: err.data + ' for ' + node.plugin.label
+        });
+      });
+  }
+
+  previewPipeline() {
+    this.HydratorPlusPlusConsoleActions.resetMessages();
+    this.HydratorPlusPlusConsoleActions.addMessage({
+      type: 'normal',
+      content: 'Start generating preview data...'
+    });
+    let nodesMap = {};
+    let connections = this.state.config.connections;
+    let adjacencyMap = {};
+
+    this.state.__ui__.nodes.forEach( node => nodesMap[node.name] = node );
+
+    connections.forEach( conn => {
+      if (Array.isArray(adjacencyMap[conn.from])) {
+        adjacencyMap[conn.from].push(conn.to);
+      } else {
+        adjacencyMap[conn.from] = [conn.to];
+      }
+    });
+
+
+    // FIND SOURCE
+    let source = {};
+    angular.forEach(nodesMap, (node) => {
+      if (this.GLOBALS.pluginConvert[node.type] === 'source') {
+        source = node;
+      }
+    });
+
+    this._fetchPreviewRecords(source, { properties: source.plugin.properties }, nodesMap, adjacencyMap);
+  }
 }
 
-HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES'];
+HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES', 'myPipelineApi'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);
