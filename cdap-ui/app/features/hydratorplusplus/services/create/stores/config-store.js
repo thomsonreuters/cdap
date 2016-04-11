@@ -773,9 +773,12 @@ class HydratorPlusPlusConfigStore {
       .then((res) => {
         let config = node;
         config.previewData = {
-          input: body,
           output: res
         };
+
+        if (!isSource) {
+          config.previewData.input = body;
+        }
 
         this.editNodeProperties(config.name, config);
         this.HydratorPlusPlusConsoleActions.addMessage({
