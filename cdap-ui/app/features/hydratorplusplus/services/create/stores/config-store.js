@@ -740,7 +740,7 @@ class HydratorPlusPlusConfigStore {
       );
   }
 
-  _fetchPreviewRecords(node, body, isSource, nodesMap, adjacencyMap) {
+  _fetchPreviewRecords(node, body, isSource, nodesMap, adjacencyMap, count) {
 
     let params = {
       namespace: this.$state.params.namespace,
@@ -765,7 +765,7 @@ class HydratorPlusPlusConfigStore {
     }
 
     if (isSource) {
-      body.count = 5;
+      body.count = count;
     }
 
     this.myPipelineApi.preview(params, body)
@@ -811,7 +811,7 @@ class HydratorPlusPlusConfigStore {
       });
   }
 
-  previewPipeline() {
+  previewPipeline(count) {
     this.HydratorPlusPlusConsoleActions.resetMessages();
     this.HydratorPlusPlusConsoleActions.addMessage({
       type: 'normal',
@@ -840,7 +840,7 @@ class HydratorPlusPlusConfigStore {
       }
     });
 
-    this._fetchPreviewRecords(source, { properties: source.plugin.properties }, true, nodesMap, adjacencyMap);
+    this._fetchPreviewRecords(source, { properties: source.plugin.properties }, true, nodesMap, adjacencyMap, count);
   }
 }
 
