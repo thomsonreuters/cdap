@@ -187,7 +187,6 @@ function getEs6Features(isNegate) {
     'apps',
     'search',
     'pins',
-    'hydrator',
     'hydratorplusplus',
     'tracker'
   ];
@@ -479,7 +478,6 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch([
     './app/**/*.js',
     '!./app/features/workflows/**/*.js',
-    '!./app/features/hydrator/**/*.js',
     '!./app/features/hydratorplusplus/**/*.js',
     '!./app/features/apps/**/*.js',
     '!./app/features/search/**/*.js',
@@ -496,7 +494,6 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   ], ['jshint', 'watch:js:app']);
   gulp.watch([
     './app/features/workflows/**/*.js',
-    './app/features/hydrator/**/*.js',
     './app/features/hydratorplusplus/**/*.js',
     './app/features/apps/**/*.js',
     './app/features/pins/**/*.js',
