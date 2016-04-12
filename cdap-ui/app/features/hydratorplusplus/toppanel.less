@@ -22,6 +22,20 @@
 body.theme-cdap {
   &.state-hydratorplusplus-create {
     div.side-panel.top {
+      background-color: white;
+      border-bottom: 1px solid @table-border-color;
+      position: fixed;
+      top: 50px;
+      right: 0;
+      left: 130px;
+      z-index: 1029;
+      height: @height-of-toppanel;
+      // .box-shadow(5px 0 10px rgba(0, 0, 0, 0.5));
+      max-width: ~"calc(100% - 130px)";
+      .transition(all 0.2s ease);
+      border-left: 0;
+      border-top: 0;
+
       div.btn {
         width: 25%;
       }
@@ -340,20 +354,7 @@ body.theme-cdap {
       }
     }
     div.side-panel.top {
-      background-color: white;
-      border-bottom: 1px solid @table-border-color;
-      position: fixed;
       top: 50px;
-      right: 0;
-      left: 130px;
-      z-index: 1029;
-      height: @height-of-toppanel;
-      // .box-shadow(5px 0 10px rgba(0, 0, 0, 0.5));
-      max-width: ~"calc(100% - 130px)";
-      .transition(all 0.2s ease);
-      border-left: 0;
-      border-top: 0;
-
       div.pipeline-type {
         color: #397cf1;
         float: left;

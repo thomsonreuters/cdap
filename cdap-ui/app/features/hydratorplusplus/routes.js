@@ -27,6 +27,16 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         },
         template: '<ui-view/>'
       })
+        .state('hydratorplusplus.list', {
+          url: '',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorList'
+          },
+          templateUrl: '/assets/features/hydratorplusplus/templates/list.html',
+          controller: 'HydratorPlusPlusListController',
+          controllerAs: 'ListController'
+        })
 
         .state('hydratorplusplus.create', {
           url: '/studio?draftId&artifactType',
