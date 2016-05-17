@@ -31,7 +31,6 @@ angular.module(PKG.name + '.services')
         postActionDetailFetch = pluginFetchBase + '/plugins/:pluginName',
         artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
         pluginMethodsPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:version/plugintypes/:pluginType/plugins/:pluginName/methods/:methodName',
-        artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties',
         previewPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/plugintypes/:pluginType/plugins/:pluginName/methods/preview?scope=system';
 
 
