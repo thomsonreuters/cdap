@@ -58,6 +58,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -169,29 +171,40 @@ public abstract class AppFabricTestBase {
     injector = Guice.createInjector(new AppFabricTestModule(conf));
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
-    dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    txClient = injector.getInstance(TransactionSystemClient.class);
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsService = injector.getInstance(MetricsQueryService.class);
+    streamService = injector.getInstance(StreamService.class);
+    serviceStore = injector.getInstance(ServiceStore.class);
+    metadataService = injector.getInstance(MetadataService.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
+
+    // Start all services in parallel
+    List<Service.State> states = Futures.successfulAsList(
+      txManager.start(),
+      dsOpService.start(),
+      datasetService.start(),
+      appFabricServer.start(),
+      metricsCollectionService.start(),
+      metricsService.start(),
+      streamService.start(),
+      serviceStore.start(),
+      metadataService.start()
+    ).get();
+
+    // Make sure all of them are started correctly
+    for (Service.State state : states) {
+      Assert.assertNotNull(state);
+    }
+
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     ServiceDiscovered appFabricHttpDiscovered = discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP);
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(appFabricHttpDiscovered);
     port = endpointStrategy.pick(1, TimeUnit.SECONDS).getSocketAddress().getPort();
-    txClient = injector.getInstance(TransactionSystemClient.class);
-    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
-    metricsService = injector.getInstance(MetricsQueryService.class);
-    metricsService.startAndWait();
-    streamService = injector.getInstance(StreamService.class);
-    streamService.startAndWait();
-    serviceStore = injector.getInstance(ServiceStore.class);
-    serviceStore.startAndWait();
-    metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
-    locationFactory = getInjector().getInstance(LocationFactory.class);
+
     streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
     streamViewClient = new StreamViewClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
@@ -201,15 +214,24 @@ public abstract class AppFabricTestBase {
   @AfterClass
   public static void afterClass() throws Exception {
     deleteNamespaces();
-    streamService.stopAndWait();
-    appFabricServer.stopAndWait();
-    metricsCollectionService.stopAndWait();
-    metricsService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    txManager.stopAndWait();
-    serviceStore.stopAndWait();
-    metadataService.stopAndWait();
+
+    // Stop all services in parallel
+    List<Service.State> states = Futures.successfulAsList(
+      streamService.stop(),
+      appFabricServer.stop(),
+      metricsCollectionService.stop(),
+      metricsService.stop(),
+      datasetService.stop(),
+      dsOpService.stop(),
+      txManager.stop(),
+      serviceStore.stop(),
+      metadataService.stop()
+    ).get();
+
+    // Make sure all of them are stopped correctly
+    for (Service.State state : states) {
+      Assert.assertNotNull(state);
+    }
   }
 
   protected static Injector getInjector() {
