@@ -98,6 +98,8 @@ public class ArtifactRepositoryTest {
   private static ArtifactRepository artifactRepository;
   private static ClassLoader appClassLoader;
   private static MetadataStore metadataStore;
+  private static File appArtifactFile;
+  private static File testPluginJar;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -112,15 +114,19 @@ public class ArtifactRepositoryTest {
     Injector injector =  AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     metadataStore = injector.getInstance(MetadataStore.class);
+    appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
+                                   createManifest(ManifestFields.EXPORT_PACKAGE,
+                                                  PluginTestRunnable.class.getPackage().getName()));
+    appClassLoader = createAppClassLoader(appArtifactFile);
+
+    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
+    testPluginJar = createPluginJar(TestPlugin.class, new File(tmpDir, "APlugin-1.0.0.jar"), manifest);
   }
 
   @Before
   public void setupData() throws Exception {
     artifactRepository.clear(NamespaceId.DEFAULT);
-    File appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
-      createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
-    appClassLoader = createAppClassLoader(appArtifactFile);
   }
 
   @Test
@@ -157,14 +163,13 @@ public class ArtifactRepositoryTest {
   @Test
   public void testAddSystemArtifacts() throws Exception {
     Id.Artifact systemAppArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "PluginTest", "1.0.0");
-    File systemAppJar = createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
-      createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
-
+    File systemAppJar = Locations.linkOrCopy(Locations.toLocation(appArtifactFile),
+                                             new File(systemArtifactsDir1, appArtifactFile.getName()));
     // write plugins jar
     Id.Artifact pluginArtifactId1 = Id.Artifact.from(Id.Namespace.SYSTEM, "APlugin", "1.0.0");
 
-    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    File pluginJar1 = createPluginJar(TestPlugin.class, new File(systemArtifactsDir1, "APlugin-1.0.0.jar"), manifest);
+    File pluginJar1 = Locations.linkOrCopy(Locations.toLocation(testPluginJar),
+                                           new File(systemArtifactsDir1, "APlugin-1.0.0.jar"));
 
     // write plugins config file
     Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
@@ -187,8 +192,8 @@ public class ArtifactRepositoryTest {
     // write another plugins jar to a different directory, to test that plugins will get picked up from both directories
     Id.Artifact pluginArtifactId2 = Id.Artifact.from(Id.Namespace.SYSTEM, "BPlugin", "1.0.0");
 
-    manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    File pluginJar2 = createPluginJar(TestPlugin.class, new File(systemArtifactsDir2, "BPlugin-1.0.0.jar"), manifest);
+    File pluginJar2 = Locations.linkOrCopy(Locations.toLocation(testPluginJar),
+                                           new File(systemArtifactsDir2, "BPlugin-1.0.0.jar"));
 
     // write plugins config file
     Set<PluginClass> manuallyAddedPlugins2 = ImmutableSet.of(
@@ -267,14 +272,13 @@ public class ArtifactRepositoryTest {
     File pluginDir = DirUtils.createTempDir(tmpDir);
     // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
 
     // add the artifact
     Set<ArtifactRange> parents = ImmutableSet.of(
       new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
-    artifactRepository.addArtifact(artifactId, jarFile, parents);
+    artifactRepository.addArtifact(artifactId, testPluginJar, parents);
 
     // check the parent can see the plugins
     SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
@@ -315,13 +319,12 @@ public class ArtifactRepositoryTest {
     // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
     Id.Artifact artifact1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
 
     // Build up the plugin repository.
     Set<ArtifactRange> parents = ImmutableSet.of(
       new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    artifactRepository.addArtifact(artifact1Id, jarFile, parents);
+    artifactRepository.addArtifact(artifact1Id, testPluginJar, parents);
 
     // Should get the only version.
     Map.Entry<ArtifactDescriptor, PluginClass> plugin =
@@ -335,7 +338,7 @@ public class ArtifactRepositoryTest {
 
     // Create another plugin jar with later version and update the repository
     Id.Artifact artifact2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "2.0");
-    jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-2.0.jar"), manifest);
+    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-2.0.jar"), manifest);
     artifactRepository.addArtifact(artifact2Id, jarFile, parents);
 
     // Should select the latest version
@@ -449,8 +452,8 @@ public class ArtifactRepositoryTest {
   public void testNamespaceIsolation() throws Exception {
     // create system app artifact
     Id.Artifact systemAppArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "PluginTest", "1.0.0");
-    File jar = createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
-                 createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
+    File jar = Locations.linkOrCopy(Locations.toLocation(appArtifactFile),
+                                             new File(systemArtifactsDir1, appArtifactFile.getName()));
     artifactRepository.addSystemArtifacts();
     Assert.assertTrue(jar.delete());
 
@@ -466,8 +469,7 @@ public class ArtifactRepositoryTest {
     try {
       // create plugin artifact in namespace1 that extends the system artifact
       // There should be two plugins there (TestPlugin and TestPlugin2).
-      Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-      File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+      File jarFile = Locations.linkOrCopy(Locations.toLocation(testPluginJar), new File(tmpDir, "myPlugin-1.0.jar"));
       artifactRepository.addArtifact(pluginArtifactId1, jarFile, parents);
 
       // create plugin artifact in namespace2 that extends the system artifact
