@@ -122,6 +122,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
     'tabbed-parsed-literal',
+    'tabbed-block',
 ]
 
 _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
