@@ -27,17 +27,17 @@ RETURN_STRING="\
 "
 VERSION_STRING="Hydrator Version "
 
-function get_hydrator_version() {
-  local base_target="${1}"
-  local base_source="${2}"
-  local source_url="${base_source}/pom.xml"
-  local target="${base_target}/pom.xml"
-  curl --silent ${source_url} --output ${target}
-  HYDRATOR_VERSION=$(grep "<version>" ${target})
-  HYDRATOR_VERSION=${HYDRATOR_VERSION#*<version>}
-  HYDRATOR_VERSION=${HYDRATOR_VERSION%%</version>*}
-  export HYDRATOR_VERSION
-}
+# function get_hydrator_version() {
+#   local base_target="${1}"
+#   local base_source="${2}"
+#   local source_url="${base_source}/pom.xml"
+#   local target="${base_target}/pom.xml"
+#   curl --silent ${source_url} --output ${target}
+#   HYDRATOR_VERSION=$(grep "<version>" ${target})
+#   HYDRATOR_VERSION=${HYDRATOR_VERSION#*<version>}
+#   HYDRATOR_VERSION=${HYDRATOR_VERSION%%</version>*}
+#   export HYDRATOR_VERSION
+# }
 
 function download_md_doc_file() {
   # Downloads a Markdown docs file to a directory
@@ -91,7 +91,7 @@ function download_md_doc_file() {
       cat ${base_target}/${append_file} >> ${target}
     fi
     echo "${RETURN_STRING}" >> ${target}
-    echo "${VERSION_STRING}${HYDRATOR_VERSION}" >> ${target}
+    echo "${VERSION_STRING}${CDAP_HYDRATOR_VERSION}" >> ${target}
   else
     local m="URL does not exist: ${source_url}"
     echo_red_bold "${m}"
@@ -122,19 +122,20 @@ function download_includes() {
   local base_target="${1}/${hydrator_plugins}"
   cp -R "${SCRIPT_PATH}/source/_includes/${hydrator_plugins}" "${1}"
   
-  local base_source="https://raw.githubusercontent.com/caskdata/hydrator-plugins"
-  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
-    local hydrator_branch="develop"
-  else
-    local hydrator_branch="${GIT_BRANCH_CDAP_HYDRATOR}"
-  fi
+
+#   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
+#     local hydrator_branch="develop"
+#   else
+#     local hydrator_branch="${GIT_BRANCH_CASK_HYDRATOR}"
+#   fi
   
-  local hydrator_source="${base_source}/${hydrator_branch}"
+  local hydrator_source="https://raw.githubusercontent.com/caskdata/${hydrator_plugins}/${GIT_BRANCH_CASK_HYDRATOR}"
   echo_red_bold "Using $hydrator_source"
-  get_hydrator_version $base_target $hydrator_source
+#   get_hydrator_version $base_target $hydrator_source
+#   get_cask_hydrator_version ${GIT_BRANCH_CASK_HYDRATOR}
   
   # Parameter          1            2                3                 4                      5
-  # Definition         base_target  base_source      source_dir        source_file_name       append_file (optional)
+  # Definition         base_target  hydrator_source  source_dir        source_file_name       append_file (optional)
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsink.md 
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-batchsource.md 
   download_md_doc_file $base_target $hydrator_source cassandra-plugins Cassandra-realtimesink.md 
