@@ -58,12 +58,12 @@ Several optional headers may also be specified:
      - ``1.0.0``
    * - Artifact-Extends
      - If the artifact contains plugins, describes which parent artifacts should have access to those plugins.
-       Multiple parents can be given by separating them with a ``/`` 
+       Multiple parents can be given by separating them with a ``'/'``.
      - ``cdap-etl-batch[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)``
    * - Artifact-Plugins
      - JSON Array of plugins contained in the artifact that are not annotated as a plugin.
        This should be used for third-party JARs that need to be plugins, such as JDBC drivers. Each element
-       in the array is a JSON object containing name, type, and className of the plugin.
+       in the array is a JSON object containing ``name``, ``type``, and ``className`` of the plugin.
      - ``[ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]``
 
 .. _http-restful-api-artifact-available:
@@ -650,7 +650,7 @@ To list application classes, submit an HTTP GET request::
 
 This will return a JSON array that lists all application classes contained in artifacts.
 Each element in the array is a JSON object that describes the artifact the class originates in
-as well as the class name. Example output for the ``ScriptFilter`` (pretty-printed and reformatted to fit):
+as well as the class name. Example output (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
@@ -682,6 +682,7 @@ as well as the class name. Example output for the ``ScriptFilter`` (pretty-print
         },
         "className": "co.cask.cdap.examples.purchase.PurchaseApp"
       },
+      . . .
     ]
 
 .. _http-restful-api-artifact-appclass-detail:
