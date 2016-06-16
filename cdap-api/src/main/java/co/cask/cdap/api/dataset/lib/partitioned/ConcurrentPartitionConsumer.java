@@ -54,14 +54,17 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   private List<PartitionDetail> selectPartitions(PartitionAcceptor acceptor, ConsumerWorkingSet workingSet) {
     long now = System.currentTimeMillis();
     List<PartitionDetail> toConsume = new ArrayList<>();
-    for (ConsumablePartition consumablePartition : workingSet.getPartitions()) {
+
+    Iterator<ConsumablePartition> iter = workingSet.getPartitions().iterator();
+    while (iter.hasNext()) {
+      ConsumablePartition consumablePartition = iter.next();
       if (ProcessState.AVAILABLE != consumablePartition.getProcessState()) {
         continue;
       }
       PartitionDetail partition = getPartitionedFileSet().getPartition(consumablePartition.getPartitionKey());
       if (partition == null) {
         // no longer exists, so skip it and remove it from the working set
-        workingSet.remove(consumablePartition.getPartitionKey());
+        iter.remove();
         continue;
       }
       PartitionAcceptor.Return accept = acceptor.accept(partition);
