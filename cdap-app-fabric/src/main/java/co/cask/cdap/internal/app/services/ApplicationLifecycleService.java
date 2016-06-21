@@ -562,7 +562,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ApplicationSpecification appSpec = store.getApplication(appId);
     deleteAppMetadata(appId, appSpec);
 
-    store.removeApplication(appId);
+    // TODO: change whats passed in here
+    store.removeApplication(appId.toEntityId());
 
     try {
       usageRegistry.unregister(appId);

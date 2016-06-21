@@ -197,11 +197,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testWorkflowRunLogs() throws Exception {
-    ProgramId workflowId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
+    ProgramId workflowId = MockLogReader.SOME_WORKFLOW_APP
       .workflow(MockLogReader.SOME_WORKFLOW);
     RunRecord runRecord = mockLogReader.getRunRecord(workflowId.toId());
-    List<LogLine> logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "workflows",
-                                     MockLogReader.SOME_WORKFLOW, runRecord.getPid(), "next");
+    List<LogLine> logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(),
+                                     "workflows", MockLogReader.SOME_WORKFLOW, runRecord.getPid(), "next");
     Assert.assertEquals(320, logLines.size());
     // First 80 lines correspond to the Workflow
     String log = logLines.get(5).getLog();
@@ -219,10 +219,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertFalse(log.contains(MockLogReader.SOME_MAPREDUCE));
     Assert.assertTrue(log.contains(MockLogReader.SOME_SPARK));
 
-    ProgramId mapReduceId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
-      .mr(MockLogReader.SOME_MAPREDUCE);
+    ProgramId mapReduceId = MockLogReader.SOME_WORKFLOW_APP.mr(MockLogReader.SOME_MAPREDUCE);
     runRecord = mockLogReader.getRunRecord(mapReduceId.toId());
-    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "mapreduce",
+    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "mapreduce",
                        MockLogReader.SOME_MAPREDUCE, runRecord.getPid(), "next");
     // Only 80 lines should correspond to MapReduce
     Assert.assertEquals(80, logLines.size());
@@ -231,10 +230,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertTrue(log.contains(MockLogReader.SOME_MAPREDUCE));
     Assert.assertFalse(log.contains(MockLogReader.SOME_SPARK));
 
-    ProgramId sparkId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
-      .spark(MockLogReader.SOME_SPARK);
+    ProgramId sparkId = MockLogReader.SOME_WORKFLOW_APP.spark(MockLogReader.SOME_SPARK);
     runRecord = mockLogReader.getRunRecord(sparkId.toId());
-    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "spark",
+    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "spark",
                        MockLogReader.SOME_SPARK, runRecord.getPid(), "next");
     // Only 80 lines should correspond to Spark
     Assert.assertEquals(80, logLines.size());

@@ -20,9 +20,9 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -42,46 +42,40 @@ public class RemoteRuntimeStore extends RemoteStoreClient implements RuntimeStor
   }
 
   @Override
-  public void compareAndSetStatus(Id.Program id, String pid, ProgramRunStatus expectedStatus,
+  public void compareAndSetStatus(ProgramId id, String pid, ProgramRunStatus expectedStatus,
                                   ProgramRunStatus updateStatus) {
     executeRequest("compareAndSetStatus",
                    id, pid, expectedStatus, updateStatus);
   }
 
   @Override
-  public void setStart(Id.Program id, String pid, long startTime, @Nullable String twillRunId,
+  public void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
                        Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
-    executeRequest("setStartWithTwillRunId",
+    executeRequest("setStart",
                    id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
   }
 
   @Override
-  public void setStart(Id.Program id, String pid, long startTime) {
-    executeRequest("setStart",
-                   id, pid, startTime);
-  }
-
-  @Override
-  public void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus) {
+  public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus) {
     // delegates on client side; so corresponding method is not required to be implemented on server side
     setStop(id, pid, endTime, runStatus, null);
   }
 
   @Override
-  public void setStop(Id.Program id, String pid, long endTime, ProgramRunStatus runStatus,
+  public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
                       @Nullable BasicThrowable failureCause) {
     executeRequest("setStop",
                    id, pid, endTime, runStatus, failureCause);
   }
 
   @Override
-  public void setSuspend(Id.Program id, String pid) {
+  public void setSuspend(ProgramId id, String pid) {
     executeRequest("setSuspend",
                    id, pid);
   }
 
   @Override
-  public void setResume(Id.Program id, String pid) {
+  public void setResume(ProgramId id, String pid) {
     executeRequest("setResume",
                    id, pid);
   }

@@ -23,6 +23,7 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
@@ -52,7 +53,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteStoreHandler {
   public void compareAndSetStatus(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
     List<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
+    ProgramId program = deserialize(arguments.get(0));
     String pid = deserialize(arguments.get(1));
     ProgramRunStatus expectedStatus = deserialize(arguments.get(2));
     ProgramRunStatus updateStatus = deserialize(arguments.get(3));
@@ -62,11 +63,11 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteStoreHandler {
   }
 
   @POST
-  @Path("/setStartWithTwillRunId")
-  public void setStartWithTwillRunId(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
+  @Path("/setStart")
+  public void setStart(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
     List<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
+    ProgramId program = deserialize(arguments.get(0));
     String pid = deserialize(arguments.get(1));
     long startTime = deserialize(arguments.get(2));
     String twillRunId = deserialize(arguments.get(3));
@@ -78,24 +79,11 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteStoreHandler {
   }
 
   @POST
-  @Path("/setStart")
-  public void setStart(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
-    List<MethodArgument> arguments = parseArguments(request);
-
-    Id.Program program = deserialize(arguments.get(0));
-    String pid = deserialize(arguments.get(1));
-    long startTime = deserialize(arguments.get(2));
-    store.setStart(program, pid, startTime);
-
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  @POST
   @Path("/setStop")
   public void setStop(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
     List<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
+    ProgramId program = deserialize(arguments.get(0));
     String pid = deserialize(arguments.get(1));
     long endTime = deserialize(arguments.get(2));
     ProgramRunStatus runStatus = deserialize(arguments.get(3));
@@ -110,7 +98,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteStoreHandler {
   public void setSuspend(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
     List<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
+    ProgramId program = deserialize(arguments.get(0));
     String pid = deserialize(arguments.get(1));
     store.setSuspend(program, pid);
 
@@ -122,7 +110,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteStoreHandler {
   public void setResume(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
     List<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserialize(arguments.get(0));
+    ProgramId program = deserialize(arguments.get(0));
     String pid = deserialize(arguments.get(1));
     store.setResume(program, pid);
 

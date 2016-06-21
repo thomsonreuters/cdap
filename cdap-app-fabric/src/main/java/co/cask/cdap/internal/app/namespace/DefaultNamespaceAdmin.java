@@ -231,7 +231,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       queueAdmin.dropAllInNamespace(namespaceId);
       streamAdmin.dropAllInNamespace(namespaceId);
       // Delete all meta data
-      store.removeAll(namespaceId);
+      store.removeAll(namespaceId.toEntityId());
 
       deleteMetrics(namespaceId.toEntityId());
       // delete all artifacts in the namespace

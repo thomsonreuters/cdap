@@ -74,9 +74,13 @@ public class AppMetadataStoreTest {
       RunId runId = RunIds.generate((i + 1) * 10000);
       expected.add(RunIds.getTime(runId, TimeUnit.MILLISECONDS));
       // Start the program and stop it
-      metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+      // TODO: change this
+      metadataStoreDataset.recordProgramStart(program.toEntityId(), runId.getId(),
+                                              RunIds.getTime(runId, TimeUnit.SECONDS),
                                               null, null, null);
-      metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+      // TODO: change this
+      metadataStoreDataset.recordProgramStop(program.toEntityId(), runId.getId(),
+                                             RunIds.getTime(runId, TimeUnit.SECONDS),
                                              ProgramRunStatus.values()[i % ProgramRunStatus.values().length], null);
     }
 
