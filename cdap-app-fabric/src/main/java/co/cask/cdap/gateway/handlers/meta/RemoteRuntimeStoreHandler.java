@@ -24,32 +24,21 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
  * The {@link co.cask.http.HttpHandler} for handling REST calls to meta stores.
  */
-// we don't share the same version as other handlers, so we can upgrade/iterate faster
-@Path("/v1/execute")
-public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
-
-  private static final Gson GSON = new Gson();
-  private static final Type METHOD_ARGUMENT_LIST_TYPE = new TypeToken<List<MethodArgument>>() { }.getType();
+@Path(AbstractRemoteStoreHandler.VERSION + "/execute")
+public class RemoteRuntimeStoreHandler extends AbstractRemoteStoreHandler {
 
   private final Store store;
 
@@ -140,7 +129,6 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-
   @POST
   @Path("/updateWorkflowToken")
   public void updateWorkflowToken(HttpRequest request, HttpResponder responder) throws ClassNotFoundException {
@@ -163,22 +151,5 @@ public class RemoteRuntimeStoreHandler extends AbstractHttpHandler {
     store.addWorkflowNodeState(workflowRunId, nodeStateDetail);
 
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  private List<MethodArgument> parseArguments(HttpRequest request) {
-    String body = request.getContent().toString(Charsets.UTF_8);
-    return GSON.fromJson(body, METHOD_ARGUMENT_LIST_TYPE);
-  }
-
-  @Nullable
-  private <T> T deserialize(@Nullable MethodArgument argument) throws ClassNotFoundException {
-    if (argument == null) {
-      return null;
-    }
-    JsonElement value = argument.getValue();
-    if (value == null) {
-      return null;
-    }
-    return GSON.<T>fromJson(value, Class.forName(argument.getType()));
   }
 }

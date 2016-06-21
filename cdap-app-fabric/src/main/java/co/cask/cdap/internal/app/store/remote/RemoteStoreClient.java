@@ -20,6 +20,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.codec.BasicThrowableCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -28,6 +34,8 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -36,6 +44,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -44,6 +54,12 @@ import javax.annotation.Nullable;
  * Implements functionality common to making requests from implementations of remote stores.
  */
 public class RemoteStoreClient {
+
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
+    .create();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final HttpRequestConfig httpRequestConfig;
@@ -74,6 +90,24 @@ public class RemoteStoreClient {
     InetSocketAddress addr = getAppFabricServiceAddress();
     return String.format("http://%s:%s%s/%s",
                          addr.getHostName(), addr.getPort(), "/v1", resource);
+  }
+
+
+  protected void executeRequest(String methodName, Object... arguments) {
+    doPost("execute/" + methodName, GSON.toJson(createRequest(arguments)));
+  }
+
+  private List<MethodArgument> createRequest(Object... arguments) {
+    List<MethodArgument> methodArguments = new ArrayList<>();
+    for (Object param : arguments) {
+      if (param == null) {
+        methodArguments.add(null);
+      } else {
+        String type = param.getClass().getName();
+        methodArguments.add(new MethodArgument(type, GSON.toJsonTree(param)));
+      }
+    }
+    return methodArguments;
   }
 
   protected HttpResponse doPost(String resource, String body) {

@@ -23,21 +23,10 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.WorkflowTokenDetail;
-import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.codec.BasicThrowableCodec;
-import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
-import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.common.http.HttpResponse;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.net.HttpURLConnection;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -46,11 +35,6 @@ import javax.annotation.Nullable;
  * server.
  */
 public class RemoteRuntimeStore extends RemoteStoreClient implements RuntimeStore {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
-    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
-    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
-    .create();
 
   @Inject
   public RemoteRuntimeStore(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
@@ -112,22 +96,5 @@ public class RemoteRuntimeStore extends RemoteStoreClient implements RuntimeStor
   public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
     executeRequest("addWorkflowNodeState",
                    workflowRunId, nodeStateDetail);
-  }
-
-  private void executeRequest(String methodName, Object... arguments) {
-    doPost("execute/" + methodName, GSON.toJson(createRequest(arguments)));
-  }
-
-  private List<MethodArgument> createRequest(Object... arguments) {
-    List<MethodArgument> methodArguments = new ArrayList<>();
-    for (Object param : arguments) {
-      if (param == null) {
-        methodArguments.add(null);
-      } else {
-        String type = param.getClass().getName();
-        methodArguments.add(new MethodArgument(type, GSON.toJsonTree(param)));
-      }
-    }
-    return methodArguments;
   }
 }
