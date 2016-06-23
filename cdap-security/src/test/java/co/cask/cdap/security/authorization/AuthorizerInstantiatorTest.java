@@ -31,8 +31,8 @@ import co.cask.cdap.security.spi.authorization.AbstractAuthorizer;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
+import co.cask.cdap.security.spi.authorization.PrincipalNotFoundException;
 import co.cask.cdap.security.spi.authorization.RoleAlreadyExistsException;
-import co.cask.cdap.security.spi.authorization.RoleNotFoundException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
@@ -302,7 +302,7 @@ public class AuthorizerInstantiatorTest {
     }
 
     @Override
-    public void dropRole(Role role) throws RoleNotFoundException {
+    public void dropRole(Role role) throws PrincipalNotFoundException {
       // no-op
     }
 
