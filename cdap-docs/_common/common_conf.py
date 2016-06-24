@@ -175,7 +175,7 @@ copyright = u'2014-%s Cask Data, Inc.' % current_year
 #
 # The X.Y.Z version
 # The X.Y short-version
-# The full version, including alpha/beta/rc tags, or release version.
+# The "full" version, which includes any alpha/beta/rc/SNAPSHOT tags, also called the "release" version.
 version, short_version, release, version_tuple = get_sdk_version()
 git_hash, git_timestamp = get_git_hash_timestamp()
 
@@ -501,7 +501,7 @@ html_show_sourcelink = False
 html_copy_source = False
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
-html_show_sphinx = False
+html_show_sphinx = True
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
 #html_show_copyright = True

@@ -52,23 +52,23 @@ Several optional headers may also be specified:
    * - Header
      - Description
      - Example
-   * - Artifact-Version
+   * - **Artifact-Version**
      - The version of the artifact to add. If not specified, the ``Bundle-Version`` attribute
        in the JAR file's Manifest will be used.
      - ``1.0.0``
-   * - Artifact-Extends
+   * - **Artifact-Extends**
      - If the artifact contains plugins, describes which parent artifacts should have access to those plugins.
-       Multiple parents can be given by separating them with a ``'/'``.
+       Multiple parents can be given by separating them with a ``/`` 
      - ``cdap-etl-batch[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)``
-   * - Artifact-Plugins
+   * - **Artifact-Plugins**
      - JSON Array of plugins contained in the artifact that are not annotated as a plugin.
        This should be used for third-party JARs that need to be plugins, such as JDBC drivers. Each element
-       in the array is a JSON object containing ``name``, ``type``, and ``className`` of the plugin.
+       in the array is a JSON object containing name, type, and className of the plugin.
      - ``[ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]``
 
 .. _http-restful-api-artifact-available:
 
-List Available Artifacts
+List Available Artifacts 
 ========================
 To retrieve a list of available artifacts, submit an HTTP GET request::
 
@@ -83,8 +83,8 @@ To retrieve a list of available artifacts, submit an HTTP GET request::
    * - ``namespace-id``
      - Namespace ID
    * - ``scope``
-     - Optional scope filter. If not specified, artifacts in the ``'user'`` and
-       ``'system'`` scopes are returned. Otherwise, only artifacts in the specified scope are returned.
+     - Optional scope filter. If not specified, artifacts in the ``user`` and
+       ``system`` scopes are returned. Otherwise, only artifacts in the specified scope are returned.
 
 This will return a JSON array that lists each artifact with its name, version, and scope.
 Example output (pretty-printed):
@@ -130,7 +130,7 @@ To list all versions of a specific artifact, submit an HTTP GET request::
    * - ``artifact-name``
      - Name of the artifact
    * - ``scope``
-     - Optional scope filter. If not specified, defaults to ``'user'``.
+     - Optional scope filter. If not specified, defaults to ``user``.
 
 This will return a JSON array that lists each version of the specified artifact with
 its name, version, and scope. Example output for the ``cdap-etl-batch`` artifact (pretty-printed):
@@ -168,11 +168,11 @@ To retrieve details about a specific version of an artifact, submit an HTTP GET 
    * - ``artifact-version``
      - Version of the artifact
    * - ``scope``
-     - Optional scope filter. If not specified, defaults to ``'user'``.
+     - Optional scope filter. If not specified, defaults to 'user'.
 
 This will return a JSON object that contains information about: classes in the artifact;
 the schema of the config object supported by the ``Application`` class; and the artifact name,
-version, and scope. Example output for version |release| of the ``WordCount``
+version, and scope. Example output for version |literal-release| of the ``WordCount``
 artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
@@ -412,14 +412,13 @@ an HTTP GET request::
      - Optional scope filter. If not specified, defaults to 'user'.
   
 This will return a JSON array that lists the extensions (plugin types) available to the artifact.
-Example output for version |release| of the ``cdap-etl-batch``
-artifact (pretty-printed and reformatted to fit):
+Example output for version |literal-release| of the ``cdap-etl-batch`` artifact:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| GET /v3/namespaces/default/artifact/WordCount/versions/|release|/extensions?scope=system
-    [ "transform", "validator", "batchsource", "batchsink" ]{
+    |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions?scope=system
+    "postaction","transform","batchaggregator","validator","realtimesource","batchsource","realtimesink","batchsink"]
 
 .. _http-restful-api-artifact-available-plugins:
 
@@ -450,7 +449,10 @@ an HTTP GET request::
 This will return a JSON array that lists the plugins of the specified type
 available to the artifact. Each element in the array is a JSON object containing
 the artifact that the plugin originated from, and the plugin's class name, description, 
-name, and type. Example output for plugins of type ``transform`` available to version |release|
+name, and type. Note that the details provided are a summary compared to those provided by
+the endpoint :ref:`http-restful-api-artifact-plugin-detail`.
+
+Example output for plugins of type ``transform`` available to version |literal-release|
 of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
@@ -459,29 +461,24 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
     |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform?scope=system
 
     [
-      {
-        "artifact": {
-          "name": "cdap-etl-lib",
-          "scope": "SYSTEM",
-          "version": "|release|-batch"
+        {
+            "name": "LogParser",
+            "type": "transform",
+            "description": "Parses logs from any input source for relevant information such as 
+                URI, IP, browser, device, HTTP status code, and timestamp.",
+            "className": "co.cask.hydrator.plugin.transform.LogParserTransform",
+            "artifact": {
+                "name": "core-plugins",
+                "version": "|cask-hydrator-version|",
+                "scope": "SYSTEM"
+            }
         },
-        "className": "co.cask.cdap.etl.transform.LogParserTransform",
-        "description": "Parses logs from any input source for relevant information such as URI, IP, Browser, Device, HTTP status code, and timestamp.",
-        "name": "LogParser",
-        "type": "transform"
-      },
-      {
-        "artifact": {
-            "name": "cdap-etl-lib",
-            "scope": "SYSTEM",
-            "version": "|release|-batch"
+        {
+            "name": "JavaScript",
+            "type": "transform",
+            ...
         },
-        "className": "co.cask.cdap.etl.transform.ProjectionTransform",
-        "description": "Projection transform that lets you drop, rename, and cast fields to a different type.",
-        "name": "Projection",
-        "type": "transform"
-      },
-      ...
+        ...
     ]
 
 .. _http-restful-api-artifact-plugin-detail:
@@ -510,60 +507,65 @@ an HTTP GET request::
    * - ``plugin-name``
      - Name of the plugin
    * - ``scope``
-     - Optional scope filter. If not specified, defaults to ``'user'``.
+     - Optional scope filter. If not specified, defaults to 'user'.
 
 This will return a JSON array that lists the plugins of the specified type and name
-available to the artifact. Each element in the array is a JSON object containing
-the artifact that the plugin originated from, and the plugin's class name, description, name, type, and properties.
+available to the artifact. As can been seen compared with the endpoint
+:ref:`http-restful-api-artifact-available-plugins`, this provides all details
+on the specified plugin. Each element in the array is a JSON object containing the
+artifact that the plugin originated from, and the plugin's class name, description, name,
+type, and properties.
 
-Example output for the ``ScriptFilter`` plugin available to version |release|
+Example output for the ``ScriptFilter`` plugin available to version |literal-release|
 of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
   .. parsed-literal::
     |$| GET /v3/namespaces/default/artifacts/cdap-etl-batch/versions/|release|/extensions/transform/plugins/ScriptFilter?scope=system
-    
-    [
-      {
-        "artifact": {
-          "name": "core-plugins", 
-          "scope": "SYSTEM", 
-          "version": "|cask-hydrator-version|"
-        }, 
-        "className": "co.cask.hydrator.plugin.transform.ScriptFilterTransform", 
-        "description": "A transform plugin that filters records using a custom JavaScript provided in the plugin's config.", 
-        "endpoints": [], 
-        "name": "ScriptFilter", 
-        "properties": {
-          "lookup": {
-            "description": "Lookup tables to use during transform. Currently supports KeyValueTable.", 
-            "name": "lookup", 
-            "required": false, 
-            "type": "string"
-          }, 
-          "script": {
-            "description": "JavaScript that must implement a function 'shouldFilter' that
-              takes a JSON object representation of the input record and a context object
-              (which encapsulates CDAP metrics and logger) and returns true if the input
-              record should be filtered and false if not. For example:\n'function
-              shouldFilter(input, context) {\nif (input.count < 0)
-              {\ncontext.getLogger().info(\"Got input record with negative
-              count\");\ncontext.getMetrics().count(\"negative.count\", 1);\n}\nreturn
-              input.count > 100;\n}\n' will filter out any records whose 'count' field is
-              greater than 100.", 
-            "name": "script", 
-            "required": true, 
-            "type": "string"
-          }
-        }, 
-        "type": "transform"
-      }
-    ]   
-    
-    
 
-.. _http-restful-api-artifact-system-delete:
+    [
+        {
+            "properties": {
+                "lookup": {
+                    "name": "lookup",
+                    "description": "Lookup tables to use during transform. Currently supports KeyValueTable.",
+                    "type": "string",
+                    "required": false
+                },
+                "script": {
+                    "name": "script",
+                    "description": "JavaScript that must implement a function
+                      'shouldFilter' that takes a JSON object representation of the input
+                      record and a context object (which encapsulates CDAP metrics and
+                      logger) and returns true if the input record should be filtered and
+                      false if not. For example:\n'function shouldFilter(input, context)
+                      {\nif (input.count < 0) {\ncontext.getLogger().info(\"Got input record
+                      with negative
+                      count\");\ncontext.getMetrics().count(\"negative.count\",
+                      1);\n}\nreturn input.count > 100;\n}\n' will filter out any records
+                      whose 'count' field is greater than 100.",
+                    "type": "string",
+                    "required": true
+                }
+            },
+            "endpoints": [
+
+            ],
+            "name": "ScriptFilter",
+            "type": "transform",
+            "description": "A transform plugin that filters records using a custom
+                JavaScript provided in the plugin's config.",
+            "className": "co.cask.hydrator.plugin.transform.ScriptFilterTransform",
+            "artifact": {
+                "name": "core-plugins",
+                "version": "|cask-hydrator-version|",
+                "scope": "SYSTEM"
+            }
+        }
+    ]
+
+
 .. _http-restful-api-artifact-delete:
 
 Delete an Artifact
@@ -579,7 +581,7 @@ To delete an artifact, submit an HTTP DELETE request::
    * - Parameter
      - Description
    * - ``namespace-id``
-     - Namespace ID, either a user namespace or ``'system'``
+     - Namespace ID
    * - ``artifact-name``
      - Name of the artifact
    * - ``artifact-version``
@@ -597,11 +599,31 @@ To load all system artifacts on the CDAP Master node(s), submit an HTTP POST req
 
   POST /v3/namespaces/system/artifacts
 
-This call will make the CDAP Master scan the artifacts directories (as defined by the
-system property ``app.artifact.dir``; see the Administration Manual :ref:`Appendices
-<admin:appendix-cdap-default-applications>`) and add any new artifacts that it finds. Any
-snapshot artifacts (names that include ``-SNAPSHOT``) will be re-loaded.
+This call will make the CDAP master scan the artifacts directly and add any new artifacts
+that it finds. Any snapshot artifacts will be re-loaded.
 
+.. _http-restful-api-artifact-system-delete:
+
+Delete a System Artifact
+========================
+To delete a system artifact, submit an HTTP DELETE request::
+
+  DELETE /v3/namespaces/system/artifacts/<artifact-name>/versions/<artifact-version>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``artifact-name``
+     - Name of the artifact
+   * - ``artifact-version``
+     - Version of the artifact
+
+Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
+programs will not be able to start unless the artifact is added again, or the program application
+is updated to use a different artifact. 
 
 .. _http-restful-api-artifact-app-classes:
 
@@ -625,7 +647,7 @@ To list application classes, submit an HTTP GET request::
 
 This will return a JSON array that lists all application classes contained in artifacts.
 Each element in the array is a JSON object that describes the artifact the class originates in
-as well as the class name. Example output (pretty-printed and reformatted to fit):
+as well as the class name. Example output for the ``ScriptFilter`` (pretty-printed and reformatted to fit):
 
 .. container:: highlight
 
@@ -657,7 +679,6 @@ as well as the class name. Example output (pretty-printed and reformatted to fit
         },
         "className": "co.cask.cdap.examples.purchase.PurchaseApp"
       },
-      . . .
     ]
 
 .. _http-restful-api-artifact-appclass-detail:
