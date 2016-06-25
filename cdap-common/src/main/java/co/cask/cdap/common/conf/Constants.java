@@ -189,6 +189,7 @@ public final class Constants {
      * Guice named bindings.
      */
     public static final String HANDLERS_BINDING = "preview.http.handler";
+    public static final String ENABLED = "preview.enabled";
   }
   /**
    * Scheduler options.

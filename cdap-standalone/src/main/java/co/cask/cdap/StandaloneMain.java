@@ -215,19 +215,23 @@ public class StandaloneMain {
       }
     });
 
+    if (cConf.getBoolean(Constants.Preview.ENABLED, true)) {
+      previewMain = PreviewMain.createPreviewMain(
+        injector.getInstance(DatasetFramework.class),
+        injector.getInstance(InMemoryDiscoveryService.class),
+        injector.getInstance(ArtifactRepository.class),
+        injector.getInstance(ArtifactStore.class),
+        authorizerInstantiator,
+        injector.getInstance(StreamAdmin.class),
+        injector.getInstance(StreamCoordinatorClient.class),
+        injector.getInstance(StreamConsumerFactory.class),
+        txService,
+        injector.getInstance(TransactionManager.class)
+      );
+    } else {
+      previewMain = null;
+    }
 
-    previewMain = PreviewMain.createPreviewMain(
-      injector.getInstance(DatasetFramework.class),
-      injector.getInstance(InMemoryDiscoveryService.class),
-      injector.getInstance(ArtifactRepository.class),
-      injector.getInstance(ArtifactStore.class),
-      authorizerInstantiator,
-      injector.getInstance(StreamAdmin.class),
-      injector.getInstance(StreamCoordinatorClient.class),
-      injector.getInstance(StreamConsumerFactory.class),
-      txService,
-      injector.getInstance(TransactionManager.class)
-    );
   }
 
   /**
@@ -300,7 +304,9 @@ public class StandaloneMain {
     if (trackerAppCreationService != null) {
       trackerAppCreationService.startAndWait();
     }
-    previewMain.startUp();
+    if (previewMain != null) {
+      previewMain.startUp();
+    }
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -317,7 +323,9 @@ public class StandaloneMain {
     LOG.info("Shutting down Standalone CDAP");
     boolean halt = false;
     try {
-      previewMain.shutDown();
+      if (previewMain != null) {
+        previewMain.shutDown();
+      }
 
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
