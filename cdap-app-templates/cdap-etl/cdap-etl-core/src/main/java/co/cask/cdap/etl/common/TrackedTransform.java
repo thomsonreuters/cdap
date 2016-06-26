@@ -63,7 +63,7 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
     if (metricInName != null) {
       metrics.count(metricInName, 1);
     }
-    if (debugger.isPreviewEnabled()) {
+    if (debugger != null && debugger.isPreviewEnabled()) {
       debugger.getPreviewLogger(stageName).log("input.records", input);
     }
     transform.transform(input, metricOutName == null ? emitter :

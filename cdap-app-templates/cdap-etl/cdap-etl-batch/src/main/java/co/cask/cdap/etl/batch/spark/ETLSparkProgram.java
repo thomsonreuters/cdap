@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.batch.spark;
 
-import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -281,12 +280,10 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
   public static final class PreGroupFunction
     extends TransformExecutorFunction<Tuple2<Object, Object>, KeyValue<Object, Object>, Object, Object> {
     private final String aggregatorName;
-    private final Debugger debugger;
 
     public PreGroupFunction(JavaSparkExecutionContext sec, @Nullable String aggregatorName) {
       super(sec, null);
       this.aggregatorName = aggregatorName;
-      this.debugger = sec;
     }
 
     @Override
@@ -307,7 +304,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
 
       TransformExecutorFactory<KeyValue<Object, Object>> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, true, debugger);
+                                            logicalStartTime, runtimeArgs, true, null);
       PipelinePhase pipelinePhase = phaseSpec.getPhase().subsetTo(ImmutableSet.of(aggregatorName));
       return transformExecutorFactory.create(pipelinePhase);
     }
@@ -330,14 +327,12 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
     @Nullable
     private final String aggregatorName;
     private final boolean isBeforeBreak;
-    private final Debugger debugger;
 
     public MapFunction(JavaSparkExecutionContext sec, String pipelineStr, String aggregatorName,
                        boolean isBeforeBreak) {
       super(sec, pipelineStr);
       this.aggregatorName = aggregatorName;
       this.isBeforeBreak = isBeforeBreak;
-      this.debugger = sec;
     }
 
     @Override
@@ -346,7 +341,7 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
       throws Exception {
       TransformExecutorFactory<KeyValue<Object, T>> transformExecutorFactory =
         new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, isBeforeBreak, debugger);
+                                            logicalStartTime, runtimeArgs, isBeforeBreak, null);
 
       PipelinePhase pipelinePhase = phaseSpec.getPhase();
       if (aggregatorName != null) {
@@ -374,11 +369,9 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
    */
   public static class SingleTypeRDDMapFunction<IN, EXECUTOR_IN>
     extends TransformExecutorFunction<IN, EXECUTOR_IN, String, Object> {
-    private final Debugger debugger;
 
     public SingleTypeRDDMapFunction(JavaSparkExecutionContext sec, String pipelineStr) {
       super(sec, pipelineStr);
-      this.debugger = sec;
     }
 
     @Override
@@ -399,8 +392,8 @@ public class ETLSparkProgram implements JavaSparkMain, TxRunnable {
       throws Exception {
 
       TransformExecutorFactory<EXECUTOR_IN> transformExecutorFactory =
-        new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics,
-                                            logicalStartTime, runtimeArgs, false, debugger);
+        new SparkTransformExecutorFactory<>(pluginContext, pluginInstantiator, metrics, logicalStartTime, runtimeArgs,
+                                            false, null);
 
       PipelinePhase pipelinePhase = phaseSpec.getPhase();
       return transformExecutorFactory.create(pipelinePhase);

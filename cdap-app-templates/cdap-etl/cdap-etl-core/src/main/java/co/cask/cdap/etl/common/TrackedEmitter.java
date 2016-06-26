@@ -46,7 +46,7 @@ public class TrackedEmitter<T> implements Emitter<T> {
   public void emit(T value) {
     delegate.emit(value);
     stageMetrics.count(emitMetricName, 1);
-    if (debugger.isPreviewEnabled()) {
+    if (debugger != null && debugger.isPreviewEnabled()) {
       debugger.getPreviewLogger(stageName).log("output.records", value);
     }
   }
@@ -55,7 +55,7 @@ public class TrackedEmitter<T> implements Emitter<T> {
   public void emitError(InvalidEntry<T> value) {
     delegate.emitError(value);
     stageMetrics.count("records.error", 1);
-    if (debugger.isPreviewEnabled()) {
+    if (debugger != null && debugger.isPreviewEnabled()) {
       debugger.getPreviewLogger(stageName).log("error.records", value);
     }
   }
