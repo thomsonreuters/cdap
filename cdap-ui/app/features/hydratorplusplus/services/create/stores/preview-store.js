@@ -41,6 +41,8 @@ var preview = (state = getInitialState(), action = {}) => {
       const {previewId} = action.payload;
       stateCopy.previewId = previewId;
       return Object.assign({}, state, stateCopy);
+    case previewActions.PREVIEW_RESET:
+      return getInitialState();
     default:
       return state;
   }
@@ -68,6 +70,7 @@ angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .constant('PREVIEWSTORE_ACTIONS', {
     'TOGGLE_PREVIEW_MODE': 'TOGGLE_PREVIEW_MODE',
     'SET_PREVIEW_START_TIME': 'SET_PREVIEW_START_TIME',
-    'SET_PREVIEW_ID': 'SET_PREVIEW_ID'
+    'SET_PREVIEW_ID': 'SET_PREVIEW_ID',
+    'PREVIEW_RESET': 'PREVIEW_RESET'
   })
   .factory('HydratorPlusPlusPreviewStore', PreviewStore);

@@ -266,10 +266,10 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 
   fetchPreview() {
-    this.previewLoading = true;
     let previewId = this.previewStore.getState().preview.previewId;
-
     if (!previewId) { return; }
+
+    this.previewLoading = true;
     let params = {
       namespace: this.$state.params.namespace,
       previewId: previewId,

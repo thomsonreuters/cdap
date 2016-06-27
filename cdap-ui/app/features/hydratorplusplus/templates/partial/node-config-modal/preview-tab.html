@@ -31,7 +31,8 @@
   </div>
 </div>
 
-<div class="row" ng-if="HydratorPlusPlusNodeConfigCtrl.previewData">
+<div class="row"
+     ng-if="HydratorPlusPlusNodeConfigCtrl.previewData">
   <!-- INPUT RECORDS -->
   <div class="col-xs-6 preview-records input">
     <h4>Input Records</h4>
@@ -46,7 +47,7 @@
         </thead>
 
         <tbody>
-          <tr ng-repeat="row in ::HydratorPlusPlusNodeConfigCtrl.previewData.input.records">
+          <tr ng-repeat="row in HydratorPlusPlusNodeConfigCtrl.previewData.input.records track by $index">
             <td ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.input.schema">
               {{ ::row[field] }}
             </td>
@@ -76,7 +77,7 @@
         </thead>
 
         <tbody>
-          <tr ng-repeat="row in ::HydratorPlusPlusNodeConfigCtrl.previewData.output.records">
+          <tr ng-repeat="row in HydratorPlusPlusNodeConfigCtrl.previewData.output.records track by $index">
             <td ng-repeat="field in ::HydratorPlusPlusNodeConfigCtrl.previewData.output.schema">
               {{ ::row[field] }}
             </td>

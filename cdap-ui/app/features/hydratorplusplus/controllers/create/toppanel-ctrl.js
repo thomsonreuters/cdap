@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state, MyCDAPDataSource, GLOBALS, myAlertOnValium) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $scope, $interval, myPipelineApi, $state, MyCDAPDataSource, GLOBALS, myAlertOnValium, PREVIEWSTORE_ACTIONS) {
     'ngInject';
 
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -33,6 +33,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.dataSrc = new MyCDAPDataSource($scope);
     this.GLOBALS = GLOBALS;
     this.myAlertOnValium = myAlertOnValium;
+    this.PREVIEWSTORE_ACTIONS = PREVIEWSTORE_ACTIONS;
 
     this.canvasOperations = [
       {
@@ -81,6 +82,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.$scope.$on('$destroy', () => {
       sub();
       this.$interval.cancel(this.previewTimerInterval);
+      this.previewStore.dispatch({ type: this.PREVIEWSTORE_ACTIONS.PREVIEW_RESET });
     });
   }
   setMetadata(metadata) {
