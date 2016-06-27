@@ -127,6 +127,7 @@ public class ContextManager {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
+      // here
       new DataSetsModules().getDistributedModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),

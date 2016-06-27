@@ -40,7 +40,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -150,7 +149,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final LocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
-  private final UsageRegistry usageRegistry;
 
   private Job job;
   private Transaction transaction;
@@ -165,8 +163,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           MapReduce mapReduce, MapReduceSpecification specification,
                           BasicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
-                          UsageRegistry usageRegistry) {
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient) {
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -177,7 +174,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.streamAdmin = streamAdmin;
     this.txClient = txClient;
     this.context = context;
-    this.usageRegistry = usageRegistry;
   }
 
   @Override
@@ -701,7 +697,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     Id.Stream streamId = streamProvider.getStreamId();
     try {
-      usageRegistry.register(context.getProgram().getId(), streamId);
+      streamAdmin.register(ImmutableList.of(context.getProgram().getId()), streamId);
       streamAdmin.addAccess(new Id.Run(context.getProgram().getId(), context.getRunId().getId()),
                             streamId, AccessType.READ);
     } catch (Exception e) {
