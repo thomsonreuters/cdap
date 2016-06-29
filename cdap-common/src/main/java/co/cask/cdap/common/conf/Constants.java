@@ -702,6 +702,8 @@ public final class Constants {
       /** Prefix for extension properties */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
+      public static final String CACHE_ENABLED = "security.authorization.cache.enabled";
+      public static final String CACHE_TTL_SECS = "security.authorization.cache.ttl.secs";
     }
 
     /**

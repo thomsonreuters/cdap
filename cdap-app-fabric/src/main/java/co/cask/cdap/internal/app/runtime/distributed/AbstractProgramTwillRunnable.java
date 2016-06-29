@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.DataFabricFacadeModule;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -28,7 +29,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -56,13 +56,14 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Charsets;
@@ -148,6 +149,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runlatch;
+  private AuthorizationEnforcementService authEnforcementService;
 
   /**
    * Constructor.
@@ -222,7 +224,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       resourceReporter = new ProgramRunnableResourceReporter(program.getId().toEntityId(),
                                                              metricsCollectionService, context);
 
-      LOG.info("Runnable initialized: " + name);
+      authEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+      LOG.info("Runnable initialized: {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -297,8 +300,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     LOG.info("Starting metrics service");
     Futures.getUnchecked(
       Services.chainStart(zkClientService, kafkaClientService,
-                          metricsCollectionService, streamCoordinatorClient, resourceReporter));
+                          metricsCollectionService, streamCoordinatorClient, resourceReporter, authEnforcementService));
 
+    updateAuthCache();
     LOG.info("Starting runnable: {}", name);
     controller = programRunner.run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
@@ -356,6 +360,30 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
   }
 
+  /**
+   * On an authorization-enabled cluster, if caching is enabled too, updates the cache in the
+   * {@link AuthorizationEnforcementService} with the privileges of the user running the program.
+   */
+  private void updateAuthCache() {
+    if (!cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+      return;
+    }
+    String userName;
+    try {
+      userName = UserGroupInformation.getCurrentUser().getShortUserName();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+    Principal principal = new Principal(userName, Principal.PrincipalType.USER);
+    try {
+      authEnforcementService.updatePrivileges(principal);
+      LOG.info("Updated privileges for principal {}", principal);
+    } catch (Exception e) {
+      LOG.error("Error while updating privileges for {}. Authorization may fail for {} while accessing datasets.",
+                principal, principal);
+    }
+  }
+
   @Override
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
@@ -363,7 +391,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       Closeables.closeQuietly(program);
     }
     Futures.getUnchecked(
-      Services.chainStop(resourceReporter, streamCoordinatorClient,
+      Services.chainStop(authEnforcementService, resourceReporter, streamCoordinatorClient,
                          metricsCollectionService, kafkaClientService, zkClientService));
     LOG.info("Runnable stopped: {}", name);
   }
@@ -430,6 +458,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
+      new AuthorizationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
