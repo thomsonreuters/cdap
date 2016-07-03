@@ -24,6 +24,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +71,8 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
  * If anything fails during this process then the keystore reverts to the last successfully written file.
  * The keystore is flushed to the filesystem after every put and delete.
  */
-class FileSecureStore implements SecureStore, SecureStoreManager {
+@Singleton
+public class FileSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
 
   private static final String SCHEME_NAME = "jceks";
@@ -81,7 +84,12 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
   private final Lock writeLock;
   private final KeyStore keyStore;
 
-  FileSecureStore(CConfiguration cConf) throws IOException {
+  /**
+   *
+   * @param cConf Configuration
+   */
+  @Inject
+  public FileSecureStore(final CConfiguration cConf) {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
@@ -90,7 +98,13 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     // Get the keystore password
     password = cConf.get(Constants.Security.Store.FILE_PASSWORD).toCharArray();
 
-    keyStore = locateKeystore(path, password);
+    try {
+      keyStore = locateKeystore(path, password);
+    } catch (IOException ioe) {
+      // Throw a runtime exception so that it can be thrown by the injector
+      LOG.error("Unable to initialize the Secure Store.");
+      throw new RuntimeException();
+    }
     ReadWriteLock lock = new ReentrantReadWriteLock(true);
     readLock = lock.readLock();
     writeLock = lock.writeLock();
@@ -110,6 +124,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     writeLock.lock();
     try {
       keyStore.setKeyEntry(name, new KeyStoreEntry(secureStoreData, meta), password, null);
+      LOG.debug("Successfully added the key to the in-memory store.");
       // Attempt to persist the store.
       flush();
     } catch (KeyStoreException e) {
@@ -123,6 +138,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     } finally {
       writeLock.unlock();
     }
+    LOG.info("Key was successfully inserted.");
   }
 
   private static Key deleteFromStore(KeyStore keyStore, String name, char[] password) throws IOException {
@@ -336,6 +352,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
     try {
       // Might exist if a backup has been restored etc.
       if (Files.exists(newPath)) {
+        LOG.info("New path exists. Marking it as orphaned.");
         Files.move(newPath, Paths.get(newPath.toString() + "_ORPHANED_" + System.currentTimeMillis()));
       }
 
@@ -343,6 +360,7 @@ class FileSecureStore implements SecureStore, SecureStoreManager {
       writeToNew(newPath);
       // Do Atomic rename _NEW to CURRENT
       Files.move(newPath, path, ATOMIC_MOVE);
+      LOG.debug("Successfully flushed the secure store to " + path);
     } catch (IOException ioe) {
       LOG.error("Failed to persist the key store.", ioe);
       throw ioe;

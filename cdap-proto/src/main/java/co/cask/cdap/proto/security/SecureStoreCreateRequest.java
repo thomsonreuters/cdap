@@ -16,8 +16,8 @@
 
 package co.cask.cdap.proto.security;
 
-import javax.annotation.Nullable;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Request for creating a new entry in the secure store
