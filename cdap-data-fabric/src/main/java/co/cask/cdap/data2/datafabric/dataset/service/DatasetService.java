@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.store.NamespaceStore;
@@ -63,6 +64,7 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DatasetOpExecutor opExecutorClient;
   private final Set<DatasetMetricsReporter> metricReporters;
   private final DatasetTypeManager typeManager;
+  private final MDSDatasetsRegistry mdsDatasets;
 
   private Cancellable cancelDiscovery;
   private Cancellable opExecutorServiceWatch;
@@ -77,6 +79,7 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DatasetTypeManager typeManager,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
+                        MDSDatasetsRegistry mdsDatasets,
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetInstanceService datasetInstanceService,
                         StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
@@ -111,6 +114,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.opExecutorClient = opExecutorClient;
+    this.mdsDatasets = mdsDatasets;
     this.metricReporters = metricReporters;
   }
 
@@ -118,6 +122,7 @@ public class DatasetService extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     LOG.info("Starting DatasetService...");
 
+    mdsDatasets.startAndWait();
     typeManager.startAndWait();
     opExecutorClient.startAndWait();
     httpService.startAndWait();
@@ -216,6 +221,8 @@ public class DatasetService extends AbstractExecutionThreadService {
     if (opExecutorServiceWatch != null) {
       opExecutorServiceWatch.cancel();
     }
+
+    mdsDatasets.shutDown();
 
     typeManager.stopAndWait();
 

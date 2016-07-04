@@ -28,7 +28,6 @@ import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
-import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
@@ -37,6 +36,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTP
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -45,7 +45,6 @@ import co.cask.cdap.data2.dataset2.InMemoryNamespaceStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
-import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -182,17 +181,16 @@ public abstract class DatasetServiceTestBase {
       .build();
 
     inMemoryDatasetFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClientService, inMemoryDatasetFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryService), cConf);
     namespaceStore = new InMemoryNamespaceStore();
     namespaceStore.create(NamespaceMeta.DEFAULT);
-    TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
-    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
-                                                            txExecutorFactory,
-                                                            inMemoryDatasetFramework, defaultModules);
+    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, mdsDatasetsRegistry,
+                                                            locationFactory, defaultModules);
     instanceService = new DatasetInstanceService(
       typeManager,
-      new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework),
+      new DatasetInstanceManager(mdsDatasetsRegistry),
       new InMemoryDatasetOpExecutor(dsFramework),
       exploreFacade,
       cConf,
@@ -205,6 +203,7 @@ public abstract class DatasetServiceTestBase {
                                  typeManager,
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
+                                 mdsDatasetsRegistry,
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,

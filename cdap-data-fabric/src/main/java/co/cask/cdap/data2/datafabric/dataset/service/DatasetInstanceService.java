@@ -64,7 +64,7 @@ import javax.annotation.Nullable;
 public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
-  private final DatasetTypeManager typeManager;
+  private final DatasetTypeManager implManager;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
@@ -77,11 +77,11 @@ public class DatasetInstanceService {
 
 
   @Inject
-  public DatasetInstanceService(DatasetTypeManager typeManager, DatasetInstanceManager instanceManager,
+  public DatasetInstanceService(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
                                 NamespaceStore nsStore) {
     this.opExecutorClient = opExecutorClient;
-    this.typeManager = typeManager;
+    this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
     this.nsStore = nsStore;
@@ -348,11 +348,11 @@ public class DatasetInstanceService {
   @Nullable
   private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) throws BadRequestException {
     Id.DatasetType datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName);
-    DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetTypeId);
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(datasetTypeId);
     if (typeMeta == null) {
       // Type not found in the instance's namespace. Now try finding it in the system namespace
       Id.DatasetType systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(Id.Namespace.SYSTEM, typeName);
-      typeMeta = typeManager.getTypeInfo(systemDatasetTypeId);
+      typeMeta = implManager.getTypeInfo(systemDatasetTypeId);
     }
     return typeMeta;
   }

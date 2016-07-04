@@ -41,6 +41,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -54,7 +55,6 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.DefaultUsageRegistry;
-import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -73,6 +73,7 @@ import co.cask.tephra.distributed.TransactionService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -100,6 +101,7 @@ public class UpgradeTool {
   private final Configuration hConf;
   private final TransactionService txService;
   private final ZKClientService zkClientService;
+  private final MDSDatasetsRegistry mdsDatasetsRegistry;
   private final DatasetFramework dsFramework;
   private final StreamStateStoreUpgrader streamStateStoreUpgrader;
   private final DatasetUpgrader dsUpgrade;
@@ -145,6 +147,8 @@ public class UpgradeTool {
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
+    this.mdsDatasetsRegistry = injector.getInstance(Key.get(MDSDatasetsRegistry.class,
+                                                            Names.named("mdsDatasetsRegistry")));
     this.metadataStore = injector.getInstance(MetadataStore.class);
     this.streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
@@ -178,10 +182,10 @@ public class UpgradeTool {
           protected void configure() {
             bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
             // the DataSetsModules().getDistributedModules() binds to RemoteDatasetFramework so override that to
-            // the same InMemoryDatasetFramework
+            // InMemoryDatasetFramework
             bind(DatasetFramework.class)
               .annotatedWith(Names.named(DataSetsModules.BASIC_DATASET_FRAMEWORK))
-              .to(DatasetFramework.class);
+              .to(InMemoryDatasetFramework.class);
             install(new FactoryModuleBuilder()
                       .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                       .build(DatasetDefinitionRegistryFactory.class));
@@ -218,12 +222,20 @@ public class UpgradeTool {
 
         @Provides
         @Singleton
+        @Named("mdsDatasetsRegistry")
+        @SuppressWarnings("unused")
+        public MDSDatasetsRegistry getMDSDatasetsRegistry(TransactionSystemClientService txClient,
+                                                          @Named("datasetMDS") DatasetFramework framework) {
+          return new MDSDatasetsRegistry(txClient, framework);
+        }
+
+        @Provides
+        @Singleton
         @Named("datasetInstanceManager")
         @SuppressWarnings("unused")
-        public DatasetInstanceManager getDatasetInstanceManager(TransactionSystemClientService txClient,
-                                                                TransactionExecutorFactory txExecutorFactory,
-                                                                @Named("datasetMDS") DatasetFramework framework) {
-          return new DatasetInstanceManager(txClient, txExecutorFactory, framework);
+        public DatasetInstanceManager getDatasetInstanceManager(@Named("mdsDatasetsRegistry")
+                                                                MDSDatasetsRegistry mdsDatasetsRegistry) {
+          return new DatasetInstanceManager(mdsDatasetsRegistry);
         }
 
         // This is needed because the LocalApplicationManager
@@ -247,6 +259,7 @@ public class UpgradeTool {
     zkClientService.startAndWait();
     txService.startAndWait();
     initializeDSFramework(cConf, dsFramework);
+    mdsDatasetsRegistry.startUp();
   }
 
   /**
@@ -256,6 +269,7 @@ public class UpgradeTool {
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();
+      mdsDatasetsRegistry.shutDown();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
