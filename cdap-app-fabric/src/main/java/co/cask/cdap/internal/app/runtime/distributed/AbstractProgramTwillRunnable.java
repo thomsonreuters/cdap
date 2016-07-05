@@ -297,7 +297,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   @Override
   public void run() {
-    LOG.info("Starting metrics service");
     Futures.getUnchecked(
       Services.chainStart(zkClientService, kafkaClientService,
                           metricsCollectionService, streamCoordinatorClient, resourceReporter, authEnforcementService));
