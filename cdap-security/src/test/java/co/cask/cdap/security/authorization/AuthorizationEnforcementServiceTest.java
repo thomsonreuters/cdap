@@ -102,7 +102,8 @@ public class AuthorizationEnforcementServiceTest extends AuthorizationTestBase {
       // auth enforcement for alice should succeed on ns for actions read and write
       authEnforcementService.enforce(ns, ALICE, Action.READ);
       authEnforcementService.enforce(ns, ALICE, Action.WRITE);
-      // but it should fail for the admin action
+      // but it should fail for the dataset as well as for the admin action
+      assertAuthorizationFailure(authEnforcementService, ds, ALICE, Action.READ);
       assertAuthorizationFailure(authEnforcementService, ns, ALICE, Action.ADMIN);
       // also, since bob's privileges were never updated, it auth enforcement for bob should always fail, even for the
       // admin action on ds, which was granted in the authorization backend.

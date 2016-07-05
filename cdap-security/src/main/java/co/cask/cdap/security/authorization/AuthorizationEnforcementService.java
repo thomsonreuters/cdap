@@ -129,10 +129,8 @@ public class AuthorizationEnforcementService extends AbstractScheduledService im
     try {
       if (authPolicyCache.containsKey(principal)) {
         Set<Privilege> privileges = authPolicyCache.get(principal);
-        for (Privilege privilege : privileges) {
-          if (privilege.getAction().equals(action)) {
-            return;
-          }
+        if (privileges.contains(new Privilege(entity, action))) {
+          return;
         }
       }
     } finally {
