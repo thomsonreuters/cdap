@@ -75,7 +75,7 @@ public class AuthorizationEnforcementService extends AbstractScheduledService im
 
   @Override
   protected void runOneIteration() throws Exception {
-    if (!cacheEnabled) {
+    if (!authorizationEnabled || !cacheEnabled) {
       return;
     }
     LOG.debug("Running authorization enforcement service iteration...");
@@ -101,7 +101,7 @@ public class AuthorizationEnforcementService extends AbstractScheduledService im
    * @param principal the {@link Principal} whose privileges are to be cached.
    */
   public void updatePrivileges(Principal principal) throws Exception {
-    if (!cacheEnabled) {
+    if (!authorizationEnabled || !cacheEnabled) {
       return;
     }
     Authorizer authorizer = authorizerInstantiator.get();
@@ -113,7 +113,12 @@ public class AuthorizationEnforcementService extends AbstractScheduledService im
   @Override
   protected void startUp() throws Exception {
     super.startUp();
-    LOG.info("Starting program authorization enforcement service...");
+    LOG.info("Starting authorization enforcement service...");
+    if (!authorizationEnabled && cacheEnabled) {
+      LOG.warn("Authorization policy caching is enabled ({} is set to true), however, no privileges will be cached " +
+                 "because authorization is disabled ({} is set to false). ",
+               Constants.Security.Authorization.CACHE_ENABLED, Constants.Security.Authorization.ENABLED);
+    }
   }
 
   @Override
@@ -142,7 +147,7 @@ public class AuthorizationEnforcementService extends AbstractScheduledService im
   @Override
   protected void shutDown() throws Exception {
     super.shutDown();
-    LOG.info("Shutting down program authorization enforcement service...");
+    LOG.info("Shutting down authorization enforcement service...");
   }
 
   @VisibleForTesting
