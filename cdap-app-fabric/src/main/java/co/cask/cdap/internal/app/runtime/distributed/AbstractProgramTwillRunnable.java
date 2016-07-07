@@ -64,6 +64,7 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Charsets;
@@ -482,6 +483,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
           // For binding StreamWriter
           install(createStreamFactoryModule());
+
+          // bind AuthorizationEnforcer to AuthorizationEnforcementService
+          bind(AuthorizationEnforcer.class).to(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
+          // also bind AuthorizationEnforcementService as a singleton. This binding is used while starting/stopping
+          // the service itself.
+          bind(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
         }
       }
     );

@@ -28,6 +28,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * {@link co.cask.cdap.common.conf.Constants.Security.Authorization#CACHE_ENABLED}, authorization policies are cached
  * locally. A thread refreshes the cached policies periodically.
  */
+@Singleton
 public class AuthorizationEnforcementService extends AbstractScheduledService implements AuthorizationEnforcer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthorizationEnforcementService.class);
