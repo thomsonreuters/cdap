@@ -74,7 +74,6 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
