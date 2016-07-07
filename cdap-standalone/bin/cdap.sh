@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 # Copyright © 2014-2016 Cask Data, Inc.
 #
@@ -16,10 +15,9 @@
 # the License.
 #
 
-
 # We need a larger PermSize for SparkProgramRunner to call SparkSubmit
 if [ -d /opt/cdap ]; then
- CDAP_HOME=/opt/cdap; export CDAP_HOME
+ export CDAP_HOME="/opt/cdap"
  DEFAULT_JVM_OPTS="-Xmx3072m -XX:MaxPermSize=256m"
 else
  DEFAULT_JVM_OPTS="-Xmx2048m -XX:MaxPermSize=256m"
@@ -29,47 +27,38 @@ fi
 CDAP_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 # Specifies Web App Path
-UI_PATH=${UI_PATH:-"ui/server.js"}
+UI_PATH=${UI_PATH:-ui/server.js}
 
 APP_NAME="cask-cdap"
-APP_BASE_NAME=`basename "$0"`
+APP_BASE_NAME=$(basename "${0}")
 
-
-function program_is_installed {
-  # set to 0 initially
-  local return_=0
-  # set to 0 if not found
-  type $1 >/dev/null 2>&1 || { local return_=1; }
-  # return value
-  echo "$return_"
+# Checks for a program in the PATH
+program_is_installed() {
+  type ${1} >/dev/null 2>&1
+  _ret=${?}
+  echo ${_ret}
+  return ${_ret}
 }
 
-warn ( ) {
-    echo "$*"
-}
-
-die ( ) {
-    echo
-    echo "$*"
-    echo
-    exit 1
-}
+warn() { echo "WARN: ${@}"; }
+error() { echo "ERROR: ${@}"; }
+die() { echo; error "${@}"; echo; exit 1; }
 
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
-PRG="$0"
+PRG=${0}
 # Need this for relative symlinks.
-while [ -h "$PRG" ] ; do
-    ls=`ls -ld "$PRG"`
-    link=`expr "$ls" : '.*-> \(.*\)$'`
-    if expr "$link" : '/.*' > /dev/null; then
-        PRG="$link"
+while [ -h "${PRG}" ] ; do
+    ls=$(ls -ld "${PRG}")
+    link=$(expr "${ls}" : '.*-> \(.*\)$')
+    if expr "${link}" : '/.*' > /dev/null; then
+        PRG="${link}"
     else
-        PRG=`dirname "$PRG"`"/$link"
+        PRG=$(dirname "${PRG}")"/${link}"
     fi
 done
-cd "`dirname \"$PRG\"`/.." >&-
-APP_HOME="`pwd -P`"
+cd "$(dirname \"${PRG}\")/.." >&-
+APP_HOME=$(pwd -P)
 
 # In order to ensure that we can do hacks, need to make sure classpath is sorted
 # so that cdap jars are placed earlier in the classpath than twill or hadoop jars
@@ -99,7 +88,7 @@ location of your Java installation."
 fi
 
 # java version check
-JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
+JAVA_VERSION=$($JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}')
 if [ ! -z $JAVA_VERSION ] && [ $JAVA_VERSION -ne 7 ] && [ $JAVA_VERSION -ne 8 ]; then
   die "ERROR: Java version not supported
 Please install Java 7 or 8 - other versions of Java are not supported."
@@ -114,11 +103,11 @@ Please install Node.js: we recommend any version of Node.js starting with $NODE_
 fi
 
 # Check Node.js version
-NODE_VERSION=`node -v 2>&1`
+NODE_VERSION=$(node -v 2>&1)
 
-NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $2 } '`
-NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $3 } '`
-NODE_VERSION_PATCH=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $4 } '`
+NODE_VERSION_MAJOR=$(echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $2 } ')
+NODE_VERSION_MINOR=$(echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $3 } ')
+NODE_VERSION_PATCH=$(echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $4 } ')
 if [ "$NODE_VERSION_MAJOR" -lt 1 ] && [ "$NODE_VERSION_MINOR" -lt 11 ] && [ "$NODE_VERSION_PATCH" -lt 36 ]; then
   die "ERROR: Node.js $NODE_VERSION is not supported. The minimum version supported is $NODE_VERSION_MINIMUM."
 fi
@@ -146,13 +135,13 @@ check_before_start() {
   command -v node >/dev/null 2>&1 || \
     { echo >&2 "CDAP requires Node.js but it's either not installed or not in path. Exiting."; exit 1; }
 
-  if [ -f $pid ]; then
-    if kill -0 `cat $pid` > /dev/null 2>&1; then
-      echo "$0 running as process `cat $pid`. Stop it first or use the restart function."
+  if [ -f ${pid} ]; then
+    if kill -0 $(<${pid}) > /dev/null 2>&1; then
+      echo "$0 running as process $(<${pid}). Stop it first or use the restart function."
       exit 0
     fi
   else
-    nodejs_pid=`ps | grep ui/ | grep -v grep | awk ' { print $1 } '`
+    nodejs_pid=$(ps | grep ui/ | grep -v grep | awk ' { print $1 } ')
     if [[ "x{nodejs_pid}" != "x" ]]; then
       kill -9 $nodejs_pid 2>/dev/null >/dev/null
     fi
@@ -199,11 +188,11 @@ rotate_log () {
     fi
     if [ -f "$log" ]; then # rotate logs
     while [ $num -gt 1 ]; do
-        prev=`expr $num - 1`
-        [ -f "$log.$prev" ] && mv -f "$log.$prev" "$log.$num"
-        num=$prev
+        prev=$(expr $num - 1)
+        [ -f "${log}.${prev}" ] && mv -f "${log}.${prev}" "${log}.${num}"
+        num=${prev}
     done
-    mv -f "$log" "$log.$num";
+    mv -f "${log}" "${log}.${num}"
     fi
 }
 
@@ -224,7 +213,7 @@ start() {
         else
             echo "WARN: Docker detected, but running in the background! This may fail!"
         fi
-        ROUTER_OPTS="-Drouter.address=`hostname -i`" # -i is safe here since we know we're on Linux
+        ROUTER_OPTS="-Drouter.address=$(hostname -i)" # -i is safe here since we know we're on Linux
     fi
 
     if $foreground; then
@@ -268,7 +257,7 @@ start() {
 stop() {
     echo -n "Stopping Standalone CDAP ..."
     if [ -f $pid ]; then
-      pidToKill=`cat $pid`
+      pidToKill=$(<${pid})
       # kill -0 == see if the PID exists
       if kill -0 $pidToKill > /dev/null 2>&1; then
         kill $pidToKill > /dev/null 2>&1
@@ -295,7 +284,7 @@ restart() {
 
 status() {
     if [ -f $pid ]; then
-      pidToCheck=`cat $pid`
+      pidToCheck=$(<${pid})
       # kill -0 == see if the PID exists
       if kill -0 $pidToCheck > /dev/null 2>&1; then
         echo "$0 running as process $pidToCheck"
