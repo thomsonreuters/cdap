@@ -146,7 +146,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
     // For ENUM type List of enumValues will be populated
     // For ARRAY type items will be populated
     // For MAP type keys and values will be populated
-    // For RECORD type fields will be popuated
+    // For RECORD type fields will be populated
     while (reader.hasNext()) {
       String name = reader.nextName();
       switch (name) {
@@ -196,7 +196,6 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
           break;
         case FIELDS:
           fields = getFields(name, reader, knownRecords);
-          knownRecords.put(elementName, Schema.recordOf(elementName, fields));
           break;
         default:
           reader.skipValue();
@@ -220,6 +219,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
         break;
       case RECORD:
         schema = Schema.recordOf(elementName, fields);
+        knownRecords.put(elementName, schema);
         break;
       default:
         schema = Schema.of(schemaType);

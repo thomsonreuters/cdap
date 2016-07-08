@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,34 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.spark;
+package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
-import co.cask.cdap.etl.api.batch.BatchContext;
+import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
+import org.apache.spark.SparkConf;
 
 /**
- * Abstract implementation of {@link BatchContext} using {@link SparkClientContext}.
+ * Implementation of SparkPluginContext that delegates to a SparkContext.
  */
-public abstract class AbstractSparkBatchContext extends AbstractBatchContext implements BatchContext {
+public class BasicSparkPluginContext extends AbstractBatchContext implements SparkPluginContext {
 
-  protected final SparkClientContext sparkContext;
+  private final SparkClientContext sparkContext;
 
-  public AbstractSparkBatchContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
+  public BasicSparkPluginContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
     super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
           sparkContext.getLogicalStartTime(), sparkContext.getRuntimeArguments());
     this.sparkContext = sparkContext;
   }
 
   @Override
-  public long getLogicalStartTime() {
-    return sparkContext.getLogicalStartTime();
+  public void setSparkConf(SparkConf sparkConf) {
+    sparkContext.setSparkConf(sparkConf);
   }
 
   @Override
   public <T> T getHadoopJob() {
     throw new UnsupportedOperationException("Hadoop Job is not available in Spark");
   }
-
 }

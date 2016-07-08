@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
 import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
@@ -67,6 +68,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -494,7 +496,7 @@ public class DataPipelineTest extends HydratorTestBase {
     /*
        source1 --|--> agg1 --> sink1
                  |
-       source1 --|--> agg2 --> sink2
+       source2 --|--> agg2 --> sink2
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .setEngine(engine)
@@ -515,9 +517,6 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ParallelAggApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
-    // total programs = 4; 1 workflow, 1 job for source1,source2 -> agg1.connector,agg2.connector
-    // 1 job for agg1.connector -> sink1 and another job for agg2.connector -> sink2
-    Assert.assertEquals(4, appManager.getInfo().getPrograms().size());
     Schema inputSchema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
@@ -684,7 +683,7 @@ public class DataPipelineTest extends HydratorTestBase {
     textsToClassify.send("genuine report");
 
     // manually trigger the pipeline
-    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    final WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 

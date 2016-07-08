@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -33,19 +34,20 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
-import co.cask.cdap.etl.batch.CompositeFinisher;
-import co.cask.cdap.etl.batch.Finisher;
 import co.cask.cdap.etl.batch.LoggedBatchConfigurable;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
+import co.cask.cdap.etl.common.CompositeFinisher;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.Finisher;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -85,7 +87,9 @@ public class ETLMapReduce extends AbstractMapReduce {
   static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
 
   private Finisher finisher;
 
@@ -106,7 +110,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     setDescription("MapReduce phase executor. " + phaseSpec.getDescription());
 
     setMapperResources(phaseSpec.getResources());
-    setDriverResources(phaseSpec.getResources());
+    setDriverResources(phaseSpec.getDriverResources());
 
     Set<String> sources = phaseSpec.getPhase().getSources();
     // Planner should make sure this never happens
@@ -141,7 +145,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
-    properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec));
+    properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec, BatchPhaseSpec.class));
     setProperties(properties);
   }
 

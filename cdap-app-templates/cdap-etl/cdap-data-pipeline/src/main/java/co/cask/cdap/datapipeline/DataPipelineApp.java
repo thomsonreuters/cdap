@@ -30,8 +30,6 @@ import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpecGenerator;
 import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.planner.PipelinePlan;
-import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
 import com.google.common.collect.ImmutableSet;
@@ -71,12 +69,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
         .build());
     BatchPipelineSpec spec = specGenerator.generateSpec(config);
 
-    PipelinePlanner planner = new PipelinePlanner(supportedPluginTypes,
-                                                  ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
-                                                  ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE));
-    PipelinePlan plan = planner.plan(spec);
-
-    addWorkflow(new SmartWorkflow(spec, plan, getConfigurer(), config.getEngine()));
+    addWorkflow(new SmartWorkflow(spec, supportedPluginTypes, getConfigurer(), config.getEngine()));
     scheduleWorkflow(Schedules.builder(SCHEDULE_NAME)
                        .setDescription("Data pipeline schedule")
                        .createTimeSchedule(config.getSchedule()),

@@ -14,30 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.spark;
+package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
-import co.cask.cdap.etl.api.batch.SparkPluginContext;
-import co.cask.cdap.etl.batch.AbstractBatchContext;
-import org.apache.spark.SparkConf;
+import co.cask.cdap.etl.batch.AbstractAggregatorContext;
 
 /**
- * Implementation of SparkPluginContext that delegates to a SparkContext.
+ * Spark Aggregator Context.
  */
-public class BasicSparkPluginContext extends AbstractBatchContext implements SparkPluginContext {
+public class SparkAggregatorContext extends AbstractAggregatorContext {
 
-  private final SparkClientContext sparkContext;
-
-  public BasicSparkPluginContext(SparkClientContext sparkContext, LookupProvider lookupProvider, String stageId) {
-    super(sparkContext, sparkContext, sparkContext.getMetrics(), lookupProvider, stageId,
-          sparkContext.getLogicalStartTime(), sparkContext.getRuntimeArguments());
-    this.sparkContext = sparkContext;
-  }
-
-  @Override
-  public void setSparkConf(SparkConf sparkConf) {
-    sparkContext.setSparkConf(sparkConf);
+  public SparkAggregatorContext(SparkClientContext context, LookupProvider lookup, String stageName) {
+    super(context, context, context.getMetrics(),
+          lookup, stageName, context.getLogicalStartTime(), context.getRuntimeArguments());
   }
 
   @Override

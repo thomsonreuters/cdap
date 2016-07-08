@@ -24,9 +24,9 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
-import co.cask.cdap.etl.batch.spark.ETLSpark;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.proto.Engine;
+import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -76,6 +76,8 @@ public class ETLWorkflow extends AbstractWorkflow {
     Map<String, String> properties = new HashMap<>();
     properties.put("pipeline.spec", GSON.toJson(spec));
     setProperties(properties);
+
+
   }
 
   @Override
