@@ -39,6 +39,7 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.store.remote.RemotePrivilegesFetcher;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -48,6 +49,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -113,6 +115,12 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new NamespaceStoreModule().getStandaloneModules());
     install(new MetadataServiceModule());
     install(new AuthorizationModule());
+    install(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(PrivilegesFetcher.class).to(RemotePrivilegesFetcher.class);
+      }
+    });
   }
 
   private Scheduler createNoopScheduler() {
