@@ -227,6 +227,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       authEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
       LOG.info("Runnable initialized: {}", name);
+
+      LOG.error("######################################## AuthorizationEnforcer = {}; {} $$$$$$$$$$$$$$$$$$$$$$$$$",
+                injector.getInstance(AuthorizationEnforcer.class),
+                injector.getInstance(AuthorizationEnforcer.class).hashCode());
+      LOG.error("######################################## AuthorizationEnforcer = {}; {} $$$$$$$$$$$$$$$$$$$$$$$$$",
+                injector.getInstance(AuthorizationEnforcer.class),
+                injector.getInstance(AuthorizationEnforcer.class).hashCode());
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -380,7 +387,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.info("Updated privileges for principal {}", principal);
     } catch (Exception e) {
       LOG.error("Error while updating privileges for {}. Authorization may fail for {} while accessing datasets.",
-                principal, principal);
+                principal, principal, e);
     }
   }
 

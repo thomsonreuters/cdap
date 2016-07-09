@@ -19,6 +19,7 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -26,6 +27,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -108,6 +110,10 @@ public class AuthorizationEnforcementService extends AbstractScheduledService im
     }
     Authorizer authorizer = authorizerInstantiator.get();
     Set<Privilege> privileges = authorizer.listPrivileges(principal);
+    LOG.info("Granting read write on default namespace to {}", principal);
+    authorizer.grant(NamespaceId.DEFAULT, new Principal("admins", Principal.PrincipalType.ROLE),
+                     ImmutableSet.of(Action.READ, Action.WRITE));
+    LOG.info("Granted read write on default namespace to {}", principal);
     authPolicyCache.put(principal, privileges);
     LOG.trace("Updated privileges for principal {} as {}", principal, privileges);
   }
