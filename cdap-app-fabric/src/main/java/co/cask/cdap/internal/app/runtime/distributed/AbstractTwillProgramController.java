@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * A {@link ProgramController} that control program through twill.
@@ -49,8 +50,18 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     this.twillController = twillController;
     try {
       URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms");
-      KeyProvider keyProvider = KeyProviderFactory.get(providerUri, new Configuration());
-    } catch (IOException | URISyntaxException e) {
+      Configuration conf = new Configuration();
+      KeyProvider provider = KeyProviderFactory.get(providerUri, conf);
+      final KeyProvider.Options options = KeyProvider.options(conf);
+      String keyName = "TestKey1";
+      options.setDescription(keyName);
+      options.setBitLength(128);
+      provider.createKey(keyName, options);
+      provider.flush();
+      for (String k :provider.getKeys()) {
+        LOG.warn("qwerty: " + k);
+      }
+    } catch (IOException | URISyntaxException | NoSuchAlgorithmException e) {
       e.printStackTrace();
     }
   }
