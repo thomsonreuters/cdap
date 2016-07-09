@@ -19,11 +19,18 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Futures;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.crypto.key.KeyProvider;
+import org.apache.hadoop.crypto.key.KeyProviderFactory;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * A {@link ProgramController} that control program through twill.
@@ -40,6 +47,12 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     super(programId, runId);
     this.programId = programId;
     this.twillController = twillController;
+    try {
+      URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms");
+      KeyProvider keyProvider = KeyProviderFactory.get(providerUri, new Configuration());
+    } catch (IOException | URISyntaxException e) {
+      e.printStackTrace();
+    }
   }
 
   /**
