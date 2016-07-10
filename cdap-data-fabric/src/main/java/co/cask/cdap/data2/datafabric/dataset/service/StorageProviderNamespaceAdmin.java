@@ -22,10 +22,12 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Joiner;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -57,17 +59,31 @@ public class StorageProviderNamespaceAdmin {
    */
   protected void create(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
     Location namespaceHome = namespacedLocationFactory.get(namespaceId);
-    if (namespaceHome.exists()) {
-      LOG.warn("Home directory '{}' for namespace '{}' already exists. Deleting it.",
-               namespaceHome, namespaceId);
-      if (!namespaceHome.delete(true)) {
-        throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
+    // TODO (CDAP-6155): This is not clean. Once we do hbase mapping the DatasetFramework will pass down the
+    // NamespaceMeta to this create and we should look for the custom location in the config rather than
+    // checking like this.
+    if (namespaceHome.toString().endsWith(Joiner.on(File.separator).join(cConf.get(Constants.Namespace.NAMESPACES_DIR),
+                                                                         namespaceId.getId()))) {
+      // no namespace custom location was provided
+      if (namespaceHome.exists()) {
+        throw new IOException(String.format("Home directory '%s' for namespace '%s' already exists.",
                                             namespaceHome, namespaceId.getId()));
+
       }
-    }
-    if (!namespaceHome.mkdirs()) {
-      throw new IOException(String.format("Error while creating home directory '%s' for namesapce '%s'",
-                                          namespaceHome, namespaceId));
+      // create namespace home dir
+      if (!namespaceHome.mkdirs()) {
+        throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
+                                            namespaceHome, namespaceId));
+      }
+
+    } else {
+      // a custom location was provided so we expect it to exists
+      if (!namespaceHome.exists()) {
+        throw new IOException(String.format("The provided home directory '%s' for namespace '%s' does exists. Please " +
+                                              "create it on filesystem and then try creating a namesapce.",
+                                            namespaceHome, namespaceId.getId()));
+
+      }
     }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
@@ -87,15 +103,25 @@ public class StorageProviderNamespaceAdmin {
   protected void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
     // TODO: CDAP-1581: Implement soft delete
     Location namespaceHome = namespacedLocationFactory.get(namespaceId);
-    if (namespaceHome.exists()) {
-      if (!namespaceHome.delete(true)) {
-        throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
-                                            namespaceHome, namespaceId.getId()));
+    // TODO (CDAP-6155): This is not clean. Once we do hbase mapping the DatasetFramework will pass down the
+    // NamespaceMeta to this delete and we should look for the custom location in the config there rather than
+    // checking like this.
+    if (namespaceHome.toString().endsWith(Joiner.on(File.separator).join(cConf.get(Constants.Namespace.NAMESPACES_DIR),
+                                                                         namespaceId.getId()))) {
+      if (namespaceHome.exists()) {
+        if (!namespaceHome.delete(true)) {
+          throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
+                                              namespaceHome, namespaceId.getId()));
+        }
+      } else {
+        // warn that namespace home was not found and skip delete step
+        LOG.warn(String.format("Home directory '%s' for namespace '%s' does not exist.",
+                               namespaceHome, namespaceId));
       }
+
     } else {
-      // warn that namespace home was not found and skip delete step
-      LOG.warn(String.format("Home directory '%s' for namespace '%s' does not exist.",
-                             namespaceHome, namespaceId));
+      LOG.debug("Custom location mapping %s was found while deleting namespace %s. Skipping to delete the location.",
+                namespaceHome, namespaceId);
     }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
