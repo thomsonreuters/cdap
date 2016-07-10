@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service.hive;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -57,9 +58,9 @@ public class Hive14ExploreService extends BaseHiveExploreService {
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                               StreamAdmin streamAdmin, NamespaceStore store,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                              ExploreTableNaming tableNaming) {
+                              ExploreTableNaming tableNaming, NamespaceQueryAdmin namespaceQueryAdmin) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir,
-          streamAdmin, store, datasetInstantiatorFactory, tableNaming);
+          streamAdmin, store, datasetInstantiatorFactory, tableNaming, namespaceQueryAdmin);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");

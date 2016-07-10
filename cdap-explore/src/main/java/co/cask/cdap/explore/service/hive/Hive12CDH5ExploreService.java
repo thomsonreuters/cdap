@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service.hive;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -64,9 +65,9 @@ public class Hive12CDH5ExploreService extends BaseHiveExploreService {
                                      @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                                      StreamAdmin streamAdmin, NamespaceStore store,
                                      SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                     ExploreTableNaming tableNaming) {
+                                     ExploreTableNaming tableNaming, NamespaceQueryAdmin namespaceQueryAdmin) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir,
-          streamAdmin, store, datasetInstantiatorFactory, tableNaming);
+          streamAdmin, store, datasetInstantiatorFactory, tableNaming, namespaceQueryAdmin);
   }
 
   @Override
