@@ -130,13 +130,17 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     }
 
+    // store the metadata first and then create namespaces in the storage handler.
+    // TODO (CDAP-6155): this will be switched back to original when we do hbase mapping where we will start passing the
+    // NamespaceMeta itself to the DatasetFramework. We should first create namespaces in underlying storage before
+    // storing the namespace meta.
+    nsStore.create(metadata);
     try {
       dsFramework.createNamespace(namespace.toId());
     } catch (DatasetManagementException e) {
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
 
-    nsStore.create(metadata);
     // Skip authorization grants for the system user
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
       authorizerInstantiator.get().grant(namespace, principal, ImmutableSet.of(Action.ALL));
@@ -198,9 +202,15 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
       if (!Id.Namespace.DEFAULT.equals(namespaceId)) {
         // Finally delete namespace from MDS
-        nsStore.delete(namespaceId);
+        // store the metadata first and then create namespaces in the storage handler.
+        // TODO (CDAP-6155): this will be switched back to original when we do hbase mapping where we will start
+        // passing the NamespaceMeta itself to the DatasetFramework. We should first create namespaces in underlying
+        // storage before storing the namespace meta.
+
         // Delete namespace in storage providers
         dsFramework.deleteNamespace(namespaceId);
+
+        nsStore.delete(namespaceId);
       }
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
