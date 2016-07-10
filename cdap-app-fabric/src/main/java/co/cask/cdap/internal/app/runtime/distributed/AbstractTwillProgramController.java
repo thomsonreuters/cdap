@@ -49,6 +49,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     this.programId = programId;
     this.twillController = twillController;
     try {
+      LOG.warn("nsquare: Before accessing provider.");
       URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms/v1/");
       Configuration conf = new Configuration();
       KeyProvider provider = KeyProviderFactory.get(providerUri, conf);
