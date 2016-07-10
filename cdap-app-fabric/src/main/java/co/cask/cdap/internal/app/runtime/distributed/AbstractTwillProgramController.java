@@ -49,7 +49,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     this.programId = programId;
     this.twillController = twillController;
     try {
-      URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms");
+      URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms/v1/");
       Configuration conf = new Configuration();
       KeyProvider provider = KeyProviderFactory.get(providerUri, conf);
       final KeyProvider.Options options = KeyProvider.options(conf);
@@ -58,8 +58,9 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
       options.setBitLength(128);
       provider.createKey(keyName, options);
       provider.flush();
+      LOG.warn("nsquare: Before logging the keys.");
       for (String k :provider.getKeys()) {
-        LOG.warn("qwerty: " + k);
+        LOG.warn("nsquare: " + k);
       }
     } catch (IOException | URISyntaxException | NoSuchAlgorithmException e) {
       e.printStackTrace();
