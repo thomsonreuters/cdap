@@ -18,8 +18,10 @@ package co.cask.cdap.etl.mock.test;
 
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.etl.api.PipelineConfigurable;
+import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
+import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
 import co.cask.cdap.etl.mock.batch.MockExternalSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
@@ -56,7 +58,8 @@ public class HydratorTestBase extends TestBase {
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS, co.cask.cdap.etl.mock.batch.MockSource.PLUGIN_CLASS,
     MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, ErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
-    FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS
+    FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS,
+    MockAction.PLUGIN_CLASS
   );
 
   public HydratorTestBase() {
@@ -87,6 +90,7 @@ public class HydratorTestBase extends TestBase {
     // add the app artifact
     addAppArtifact(artifactId, appClass,
                    BatchSource.class.getPackage().getName(),
+                   Action.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 

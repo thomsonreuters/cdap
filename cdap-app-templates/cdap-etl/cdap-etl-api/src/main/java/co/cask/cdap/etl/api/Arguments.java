@@ -14,21 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.datapipeline;
+package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.customaction.CustomAction;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import java.util.Map;
 
 /**
- * Adds workflow programs.
- * This is required because {@link WorkflowForkConfigurer} doesn't extend {@link WorkflowConfigurer}.
+ * Represents arguments passed to the stages in the pipeline.
  */
-public interface WorkflowProgramAdder {
+public interface Arguments extends Iterable<Map.Entry<String, String>> {
 
-  void addMapReduce(String name);
+  /**
+   * Returns true if arguments has specified option, otherwise false is returned.
+   */
+  boolean hasOption(String name);
 
-  void addSpark(String name);
+  /**
+   * Returns the value for the given option name.
+   */
+  String getOption(String name);
 
-  void addAction(CustomAction action);
+  /**
+   * Returns an immutable map that represents all arguments.
+   */
+  Map<String, String> asMap();
 }

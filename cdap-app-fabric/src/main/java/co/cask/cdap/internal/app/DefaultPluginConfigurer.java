@@ -43,10 +43,10 @@ import javax.annotation.Nullable;
  */
 public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements PluginConfigurer {
 
-  private final Id.Artifact artifactId;
-  private final ArtifactRepository artifactRepository;
-  private final PluginInstantiator pluginInstantiator;
-  private final Map<String, Plugin> plugins;
+  protected final Id.Artifact artifactId;
+  protected final ArtifactRepository artifactRepository;
+  protected final PluginInstantiator pluginInstantiator;
+  protected final Map<String, Plugin> plugins;
   // this is the namespace that the app will be deployed in, which can be different than the namespace of
   // the artifact. If the artifact is a system artifact, it will have the system namespace.
   protected final Id.Namespace deployNamespace;

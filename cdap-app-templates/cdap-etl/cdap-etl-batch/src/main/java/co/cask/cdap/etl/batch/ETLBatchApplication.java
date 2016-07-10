@@ -39,6 +39,7 @@ import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 /**

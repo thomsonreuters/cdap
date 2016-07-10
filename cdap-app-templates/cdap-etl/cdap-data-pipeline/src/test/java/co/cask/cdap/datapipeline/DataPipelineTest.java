@@ -28,6 +28,7 @@ import co.cask.cdap.datapipeline.mock.NaiveBayesTrainer;
 import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.batch.NodeStatesAction;
@@ -101,6 +102,56 @@ public class DataPipelineTest extends HydratorTestBase {
     getMetricsManager().resetAll();
   }
 
+  @Test
+  public void testPipelineWithActions() throws Exception {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("action1", MockAction.getPlugin("mytable1")))
+      .addStage(new ETLStage("action2", MockAction.getPlugin("mytable2")))
+      .addStage(new ETLStage("action3", MockAction.getPlugin("mytable3")))
+      .addStage(new ETLStage("source", MockSource.getPlugin("singleInput")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("singleOutput")))
+      .addConnection("source", "sink")
+      .addConnection("action1", "action2")
+      .addConnection("action2", "source")
+      .addConnection("sink", "action3")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MyApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    // write records to source
+    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "singleInput");
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset("singleOutput");
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    DataSetManager<Table> actionTable = getDataset("mytable1");
+    Assert.assertEquals("value1", MockAction.readOutput(actionTable));
+    actionTable = getDataset("mytable2");
+    Assert.assertEquals("value1", MockAction.readOutput(actionTable));
+    actionTable = getDataset("mytable3");
+    Assert.assertEquals("value1", MockAction.readOutput(actionTable));
+
+    validateMetric(2, appId, "source.records.out");
+    validateMetric(2, appId, "sink.records.in");
+  }
 
   @Test
   public void testInnerJoin() throws Exception {

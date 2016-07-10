@@ -102,18 +102,21 @@ public class DefaultWorkflowConfigurer extends DefaultPluginConfigurer
 
   @Override
   public void addAction(CustomAction action) {
-    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
+    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
+                                                                 artifactRepository, pluginInstantiator));
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
-    return new DefaultWorkflowForkConfigurer<>(this);
+    return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, artifactRepository,
+                                               pluginInstantiator);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
-                                                    predicate.getClass().getName());
+                                                    predicate.getClass().getName(), deployNamespace, artifactId,
+                                                    artifactRepository, pluginInstantiator);
   }
 
   private void checkArgument(boolean condition, String template, Object...args) {

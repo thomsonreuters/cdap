@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
@@ -25,6 +26,10 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -34,7 +39,8 @@ import java.util.List;
  * @param <T> the type of the parent configurer
  */
 public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder & WorkflowForkJoiner>
-  implements WorkflowConditionConfigurer<T>, WorkflowConditionAdder, WorkflowForkJoiner {
+  extends DefaultPluginConfigurer implements WorkflowConditionConfigurer<T>, WorkflowConditionAdder,
+  WorkflowForkJoiner {
 
   private final T parentConfigurer;
   private final List<WorkflowNode> ifBranch = Lists.newArrayList();
@@ -44,7 +50,11 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   private final String predicateClassName;
   private final String conditionNodeName;
 
-  public DefaultWorkflowConditionConfigurer(String conditionNodeName, T parentConfigurer, String predicateClassName) {
+  public DefaultWorkflowConditionConfigurer(String conditionNodeName, T parentConfigurer, String predicateClassName,
+                                            Id.Namespace deployNamespace, Id.Artifact artifactId,
+                                            ArtifactRepository artifactRepository,
+                                            PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.conditionNodeName = conditionNodeName;
     this.parentConfigurer = parentConfigurer;
     this.predicateClassName = predicateClassName;
@@ -70,8 +80,16 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   }
 
   @Override
+  public WorkflowConditionConfigurer<T> addAction(CustomAction action) {
+    currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
+                                                                         artifactRepository, pluginInstantiator));
+    return this;
+  }
+
+  @Override
   public WorkflowForkConfigurer<? extends WorkflowConditionConfigurer<T>> fork() {
-    return new DefaultWorkflowForkConfigurer<>(this);
+    return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, artifactRepository,
+                                               pluginInstantiator);
   }
 
   @Override
@@ -79,7 +97,8 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
-                                                    predicate.getClass().getName());
+                                                    predicate.getClass().getName(), deployNamespace, artifactId,
+                                                    artifactRepository, pluginInstantiator);
   }
 
   @Override

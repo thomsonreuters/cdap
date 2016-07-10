@@ -13,22 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.etl.api.action;
 
-package co.cask.cdap.datapipeline;
-
-import co.cask.cdap.api.customaction.CustomAction;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.etl.api.Arguments;
 
 /**
- * Adds workflow programs.
- * This is required because {@link WorkflowForkConfigurer} doesn't extend {@link WorkflowConfigurer}.
+ * Provides access to the pipeline {@link Arguments} which can be updated.
  */
-public interface WorkflowProgramAdder {
+public interface SettableArguments extends Arguments {
 
-  void addMapReduce(String name);
-
-  void addSpark(String name);
-
-  void addAction(CustomAction action);
+  /**
+   * Sets the name and value as specified by the input parameters.
+   */
+  void setOption(String name, String value);
 }
