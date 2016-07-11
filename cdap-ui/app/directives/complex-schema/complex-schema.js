@@ -166,7 +166,8 @@ angular.module(PKG.name+'.commons')
       recordName: '=',
       hideHeader: '=',
       parentFormatOutput: '&',
-      isDisabled: '='
+      isDisabled: '=',
+      schemaPrefix: '='
     }
   };
 })
@@ -178,10 +179,11 @@ angular.module(PKG.name+'.commons')
       model: '=ngModel',
       recordName: '=',
       parentFormatOutput: '&',
-      isDisabled: '='
+      isDisabled: '=',
+      schemaPrefix: '='
     },
     link: (scope, element) => {
-      $compile('<my-complex-schema ng-model="model" record-name="recordName" hide-header="true" parent-format-output="parentFormatOutput()" is-disabled="isDisabled"></my-complex-schema')(scope, (cloned) => {
+      $compile('<my-complex-schema ng-model="model" record-name="recordName" hide-header="true" parent-format-output="parentFormatOutput()" is-disabled="isDisabled" schema-prefix="schemaPrefix"></my-complex-schema')(scope, (cloned) => {
         element.append(cloned);
       });
     }

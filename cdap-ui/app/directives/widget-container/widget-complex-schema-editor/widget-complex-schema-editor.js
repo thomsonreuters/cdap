@@ -29,6 +29,29 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
   let watchProperty = myHelpers.objectQuery(vm.config, 'property-watch') || myHelpers.objectQuery(vm.config, 'widget-attributes', 'property-watch');
 
+
+  if (vm.pluginName === 'Stream') {
+    vm.schemaPrefix = {
+      name: 'schemaPrefix',
+      type: 'record',
+      fields: [
+        {
+          name: 'ts',
+          type: 'long'
+        },
+        {
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
+          }
+        }
+      ]
+    };
+  }
+
+
   if (watchProperty) {
 
     // changing the format when it is stream
@@ -166,7 +189,8 @@ angular.module(PKG.name + '.commons')
         model: '=ngModel',
         isDisabled: '=',
         pluginProperties: '=?',
-        config: '=?'
+        config: '=?',
+        pluginName: '='
       },
       controller: ComplexSchemaEditorController,
       controllerAs: 'SchemaEditor'

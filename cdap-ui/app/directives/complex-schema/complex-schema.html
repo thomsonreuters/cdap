@@ -39,6 +39,14 @@
       {{ ComplexSchema.error }}
     </div>
 
+    <fieldset disabled>
+      <my-record-schema
+        ng-model="ComplexSchema.schemaPrefix"
+        is-disabled="ComplexSchema.isDisabled"
+        ng-if="ComplexSchema.schemaPrefix">
+      </my-record-schema>
+    </fieldset>
+
     <div ng-repeat="field in ComplexSchema.parsedSchema track by $index">
       <div class="clearfix">
         <div class="input-column">
