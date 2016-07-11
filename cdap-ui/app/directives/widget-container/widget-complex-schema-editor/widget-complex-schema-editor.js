@@ -53,12 +53,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
 
   if (watchProperty) {
-
-    // changing the format when it is stream
-    // EventPipe.on('dataset.selected', function (schema, format) {
-    //   $scope.pluginProperties[watchProperty] = format;
-    // });
-
     $scope.$watch(function () {
       return vm.pluginProperties[watchProperty];
     }, changeFormat);
@@ -113,6 +107,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   }
 
   function reRenderComplexSchema() {
+    vm.clearDOM = true;
     $timeout.cancel(clearDOMTimeoutTick1);
     $timeout.cancel(clearDOMTimeoutTick2);
     clearDOMTimeoutTick1 = $timeout(() => {
@@ -121,6 +116,15 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       }, 500);
     });
   }
+
+  // changing the format when it is stream
+  EventPipe.on('dataset.selected', function (schema, format) {
+    if (watchProperty && format) {
+      vm.pluginProperties[watchProperty] = format;
+    }
+    vm.schemaObj = schema;
+    reRenderComplexSchema();
+  });
 
   EventPipe.on('schema.export', exportSchema);
   EventPipe.on('schema.clear', () => {
@@ -169,6 +173,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   });
 
   $scope.$on('$destroy', () => {
+    EventPipe.cancelEvent('dataset.selected');
     EventPipe.cancelEvent('schema.export');
     EventPipe.cancelEvent('schema.import');
     EventPipe.cancelEvent('schema.clear');
