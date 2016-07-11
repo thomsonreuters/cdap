@@ -108,6 +108,20 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
   }
 
   /**
+   * Creates a {@link JavaPairRDD} from the given {@link Dataset}.
+   *
+   * @param namespace namespace of the Dataset
+   * @param datasetName name of the Dataset
+   * @param <K> key type
+   * @param <V> value type
+   * @return A new {@link JavaPairRDD} instance that reads from the given Dataset
+   * @throws DatasetInstantiationException if the Dataset doesn't exist
+   */
+  public <K, V> JavaPairRDD<K, V> fromDataset(String namespace, String datasetName) {
+    return fromDataset(namespace, datasetName, Collections.<String, String>emptyMap());
+  }
+
+  /**
    * Creates a {@link JavaPairRDD} from the given {@link Dataset} with the given set of Dataset arguments.
    *
    * @param datasetName name of the Dataset
@@ -119,6 +133,21 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    */
   public <K, V> JavaPairRDD<K, V> fromDataset(String datasetName, Map<String, String> arguments) {
     return fromDataset(datasetName, arguments, null);
+  }
+
+  /**
+   * Creates a {@link JavaPairRDD} from the given {@link Dataset} with the given set of Dataset arguments.
+   *
+   * @param namespace namespace of the Dataset
+   * @param datasetName name of the Dataset
+   * @param arguments arguments for the Dataset
+   * @param <K> key type
+   * @param <V> value type
+   * @return A new {@link JavaPairRDD} instance that reads from the given Dataset
+   * @throws DatasetInstantiationException if the Dataset doesn't exist
+   */
+  public <K, V> JavaPairRDD<K, V> fromDataset(String namespace, String datasetName, Map<String, String> arguments) {
+    return fromDataset(namespace, datasetName, arguments, null);
   }
 
   /**
@@ -138,6 +167,24 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
                                                        @Nullable Iterable<? extends Split> splits);
 
   /**
+   * Creates a {@link JavaPairRDD} from the given {@link Dataset} with the given set of Dataset arguments
+   * and custom list of {@link Split}s. Each {@link Split} will create a {@link Partition} in the {@link JavaPairRDD}.
+   *
+   * @param namespace namespace of the Dataset
+   * @param datasetName name of the Dataset
+   * @param arguments arguments for the Dataset
+   * @param splits list of {@link Split} or {@code null} to use the default splits provided by the Dataset
+   * @param <K> key type
+   * @param <V> value type
+   * @return A new {@link JavaPairRDD} instance that reads from the given Dataset
+   * @throws DatasetInstantiationException if the Dataset doesn't exist
+   */
+  public abstract <K, V> JavaPairRDD<K, V> fromDataset(String namespace, String datasetName,
+                                                       Map<String, String> arguments,
+                                                       @Nullable Iterable<? extends Split> splits);
+
+
+  /**
    * Creates a {@link JavaRDD} that represents all events from the given stream.
    *
    * @param streamName name of the stream
@@ -146,6 +193,18 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    */
   public JavaRDD<StreamEvent> fromStream(String streamName) {
     return fromStream(streamName, 0, Long.MAX_VALUE);
+  }
+
+  /**
+   * Creates a {@link JavaRDD} that represents all events from the given stream.
+   *
+   * @param namespace namespace of the stream
+   * @param streamName name of the stream
+   * @return A new {@link JavaRDD} instance that reads from the given stream
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public JavaRDD<StreamEvent> fromStream(String namespace, String streamName) {
+    return fromStream(namespace, streamName, 0, Long.MAX_VALUE);
   }
 
   /**
@@ -162,6 +221,20 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
   public abstract JavaRDD<StreamEvent> fromStream(String streamName, long startTime, long endTime);
 
   /**
+   * Creates a {@link JavaRDD} that represents events from the given stream in the given time range.
+   *
+   * @param namespace name of the stream
+   * @param streamName name of the stream
+   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
+   *                  passing in {@code 0} means start reading from the first event available in the stream.
+   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
+   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
+   * @return A new {@link JavaRDD} instance that reads from the given stream
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public abstract JavaRDD<StreamEvent> fromStream(String namespace, String streamName, long startTime, long endTime);
+
+  /**
    * Creates a {@link JavaPairRDD} that represents all events from the given stream. The key in the
    * resulting {@link JavaPairRDD} is the event timestamp. The stream body will
    * be decoded as the give value type. Currently it supports {@link Text}, {@link String} and {@link ByteWritable}.
@@ -173,6 +246,21 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    */
   public <V> JavaPairRDD<Long, V> fromStream(String streamName, Class<V> valueType) {
     return fromStream(streamName, 0, Long.MAX_VALUE, valueType);
+  }
+
+  /**
+   * Creates a {@link JavaPairRDD} that represents all events from the given stream. The key in the
+   * resulting {@link JavaPairRDD} is the event timestamp. The stream body will
+   * be decoded as the give value type. Currently it supports {@link Text}, {@link String} and {@link ByteWritable}.
+   *
+   * @param namespace namespace of the stream
+   * @param streamName name of the stream
+   * @param valueType type of the stream body to decode to
+   * @return A new {@link JavaRDD} instance that reads from the given stream
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public <V> JavaPairRDD<Long, V> fromStream(String namespace, String streamName, Class<V> valueType) {
+    return fromStream(namespace, streamName, 0, Long.MAX_VALUE, valueType);
   }
 
   /**
@@ -195,6 +283,25 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
 
   /**
    * Creates a {@link JavaPairRDD} that represents events from the given stream in the given time range.
+   * The key in the resulting {@link JavaPairRDD} is the event timestamp.
+   * The stream body will be decoded as the give value type.
+   * Currently it supports {@link Text}, {@link String} and {@link ByteWritable}.
+   *
+   * @param namespace namespace of the stream
+   * @param streamName name of the stream
+   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
+   *                  passing in {@code 0} means start reading from the first event available in the stream.
+   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
+   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
+   * @param valueType type of the stream body to decode to
+   * @return A new {@link JavaRDD} instance that reads from the given stream
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public abstract <V> JavaPairRDD<Long, V> fromStream(String namespace, String streamName, long startTime, long endTime,
+                                                      Class<V> valueType);
+
+  /**
+   * Creates a {@link JavaPairRDD} that represents events from the given stream in the given time range.
    * Each steam event will be decoded by an instance of the given {@link StreamEventDecoder} class.
    *
    * @param streamName name of the stream
@@ -209,6 +316,26 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    * @throws DatasetInstantiationException if the Stream doesn't exist
    */
   public abstract <K, V> JavaPairRDD<K, V> fromStream(String streamName, long startTime, long endTime,
+                                                      Class<? extends StreamEventDecoder<K, V>> decoderClass,
+                                                      Class<K> keyType, Class<V> valueType);
+
+  /**
+   * Creates a {@link JavaPairRDD} that represents events from the given stream in the given time range.
+   * Each steam event will be decoded by an instance of the given {@link StreamEventDecoder} class.
+   *
+   * @param namespace namespace of the stream
+   * @param streamName name of the stream
+   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
+   *                  passing in {@code 0} means start reading from the first event available in the stream.
+   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
+   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
+   * @param decoderClass the {@link StreamEventDecoder} for decoding {@link StreamEvent}
+   * @param keyType the type of the decoded key
+   * @param valueType the type of the decoded value
+   * @return A new {@link JavaRDD} instance that reads from the given stream
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public abstract <K, V> JavaPairRDD<K, V> fromStream(String namespace, String streamName, long startTime, long endTime,
                                                       Class<? extends StreamEventDecoder<K, V>> decoderClass,
                                                       Class<K> keyType, Class<V> valueType);
 
@@ -232,6 +359,26 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
   }
 
   /**
+   * Creates a {@link JavaPairRDD} that represents all events from the given stream.
+   * The first entry in the pair is a {@link Long}, representing the
+   * event timestamp, while the second entry is a {@link GenericStreamEventData},
+   * which contains data decoded from the stream event body base on
+   * the given {@link FormatSpecification}.
+   *
+   * @param namespace namespace of the stream
+   * @param streamName name of the stream
+   * @param formatSpec the {@link FormatSpecification} describing the format in the stream
+   * @param <T> value type
+   * @return a new {@link JavaPairRDD} instance that reads from the given stream.
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String namespace, String streamName,
+                                                                     FormatSpecification formatSpec,
+                                                                     Class<T> dataType) {
+    return fromStream(streamName, formatSpec, 0, Long.MAX_VALUE, dataType);
+  }
+
+  /**
    * Creates a {@link JavaPairRDD} that represents data from the given stream for events in the given
    * time range. The first entry in the pair is a {@link Long}, representing the
    * event timestamp, while the second entry is a {@link GenericStreamEventData},
@@ -249,6 +396,29 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    * @throws DatasetInstantiationException if the Stream doesn't exist
    */
   public abstract <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String streamName,
+                                                                              FormatSpecification formatSpec,
+                                                                              long startTime, long endTime,
+                                                                              Class<T> dataType);
+
+  /**
+   * Creates a {@link JavaPairRDD} that represents data from the given stream for events in the given
+   * time range. The first entry in the pair is a {@link Long}, representing the
+   * event timestamp, while the second entry is a {@link GenericStreamEventData},
+   * which contains data decoded from the stream event body base on
+   * the given {@link FormatSpecification}.
+   *
+   * @param namespace of the stream
+   * @param streamName name of the stream
+   * @param formatSpec the {@link FormatSpecification} describing the format in the stream
+   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
+   *                  passing in {@code 0} means start reading from the first event available in the stream.
+   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
+   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
+   * @param <T> value type
+   * @return a new {@link JavaPairRDD} instance that reads from the given stream.
+   * @throws DatasetInstantiationException if the Stream doesn't exist
+   */
+  public abstract <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String namespace, String streamName,
                                                                               FormatSpecification formatSpec,
                                                                               long startTime, long endTime,
                                                                               Class<T> dataType);

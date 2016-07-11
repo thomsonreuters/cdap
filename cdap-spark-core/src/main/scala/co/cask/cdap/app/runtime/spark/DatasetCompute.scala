@@ -35,5 +35,6 @@ private[spark] trait DatasetCompute {
     * @tparam T type of the result
     * @return result of the computation by the function
     */
-  def apply[T: ClassTag](datasetName: String, arguments: Map[String, String], computeFunc: Dataset => T): T
+  def apply[T: ClassTag](datasetNamespace: Option[String], datasetName: String, arguments: Map[String, String],
+                         computeFunc: Dataset => T): T
 }

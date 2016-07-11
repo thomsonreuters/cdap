@@ -37,6 +37,7 @@ import scala.reflect.ClassTag
   */
 class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
                                                  @transient batchReadable: BatchReadable[K, V],
+                                                 datasetNamespace: Option[String],
                                                  datasetName: String,
                                                  arguments: Map[String, String],
                                                  @transient splits: Option[Iterable[_ <: Split]],
@@ -53,7 +54,12 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
     val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
 
     val datasetCache = SparkRuntimeContextProvider.get().getDatasetCache
-    val dataset: Dataset = datasetCache.getDataset(datasetName, arguments, true, AccessType.READ)
+
+    val dataset: Dataset = if (datasetNamespace.isEmpty) {
+      datasetCache.getDataset(datasetName, arguments, true, AccessType.READ)
+    } else {
+      datasetCache.getDataset(datasetNamespace.get, datasetName, arguments, true, AccessType.READ)
+    }
 
     try {
       // Get the Transaction of the dataset if it is TransactionAware
