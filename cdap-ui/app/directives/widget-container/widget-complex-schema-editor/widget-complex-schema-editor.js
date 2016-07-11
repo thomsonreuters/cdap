@@ -128,8 +128,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
   EventPipe.on('schema.export', exportSchema);
   EventPipe.on('schema.clear', () => {
-    vm.clearDOM = true;
-
     vm.schemaObj = '';
     reRenderComplexSchema();
   });
