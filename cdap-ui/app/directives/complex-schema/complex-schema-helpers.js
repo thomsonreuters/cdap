@@ -29,6 +29,15 @@ angular.module(PKG.name+'.commons')
     'record',
     'string',
     'union'
+  ],
+  'simpleTypes': [
+    'boolean',
+    'bytes',
+    'double',
+    'float',
+    'int',
+    'long',
+    'string',
   ]
 })
 .factory('SchemaHelper', () => {

@@ -29,7 +29,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
   let watchProperty = myHelpers.objectQuery(vm.config, 'property-watch') || myHelpers.objectQuery(vm.config, 'widget-attributes', 'property-watch');
 
-
+  // Special Case for stream, we need a display only schema prefix of ts and headers
   if (vm.pluginName === 'Stream') {
     vm.schemaPrefix = {
       name: 'schemaPrefix',
@@ -50,7 +50,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       ]
     };
   }
-
 
   if (watchProperty) {
     $scope.$watch(function () {

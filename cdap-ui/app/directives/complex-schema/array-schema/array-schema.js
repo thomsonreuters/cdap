@@ -23,6 +23,15 @@ function ArraySchemaController (avsc, SCHEMA_TYPES, $timeout, $scope, SchemaHelp
   vm.items = {};
   let timeout;
 
+  vm.changeType = () => {
+    if (SCHEMA_TYPES.simpleTypes.indexOf(vm.items.displayType) !== -1) {
+      vm.items.type = vm.items.displayType;
+      vm.formatOutput();
+    } else {
+      vm.items.type = null;
+    }
+  };
+
   vm.formatOutput = () => {
     vm.error = '';
 

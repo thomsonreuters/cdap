@@ -55,6 +55,15 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout) {
     vm.formatOutput();
   };
 
+  vm.changeType = (field) => {
+    if (SCHEMA_TYPES.simpleTypes.indexOf(field.displayType) !== -1) {
+      field.type = field.displayType;
+      vm.formatOutput();
+    } else {
+      field.type = null;
+    }
+  };
+
   function init(strJson) {
     if (!strJson || strJson === 'record') {
       recordName = vm.recordName || 'a' + uuid.v4().split('-').join('');

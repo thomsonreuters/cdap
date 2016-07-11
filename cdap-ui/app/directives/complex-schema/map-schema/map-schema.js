@@ -27,6 +27,15 @@ function MapSchemaController (avsc, SCHEMA_TYPES, SchemaHelper, $scope, $timeout
     values: null
   };
 
+  vm.changeType = (field) => {
+    if (SCHEMA_TYPES.simpleTypes.indexOf(field.displayType) !== -1) {
+      field.type = field.displayType;
+      vm.formatOutput();
+    } else {
+      field.type = null;
+    }
+  };
+
   function init(strJson) {
     if (!strJson || strJson === 'map') {
       vm.fields.keys = {
