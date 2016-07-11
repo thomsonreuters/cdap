@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
 import org.apache.hadoop.crypto.key.KeyProviderFactory;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.common.Threads;
@@ -50,14 +51,23 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     this.twillController = twillController;
     try {
       LOG.warn("nsquare: Before accessing provider.");
-      URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms/v1/");
       Configuration conf = new Configuration();
+      conf.set("hadoop.security.authentication", "kerberos");
+      UserGroupInformation.setConfiguration(conf);
+      conf.set("hadoop.kms.authentication.token.validity", "1");
+      conf.set("hadoop.kms.authentication.type", "kerberos");
+      conf.set("hadoop.kms.authentication.kerberos.keytab",
+                         "/tmp/yarn.keytab");
+      conf.set("hadoop.kms.authentication.kerberos.principal", "yarn");
+      conf.set("hadoop.kms.authentication.kerberos.name.rules", "DEFAULT");
+      URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms/v1/");
       KeyProvider provider = KeyProviderFactory.get(providerUri, conf);
       final KeyProvider.Options options = KeyProvider.options(conf);
       String keyName = "TestKey1";
       options.setDescription(keyName);
       options.setBitLength(128);
       provider.createKey(keyName, options);
+
       provider.flush();
       LOG.warn("nsquare: Before logging the keys.");
       for (String k :provider.getKeys()) {
