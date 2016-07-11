@@ -14,7 +14,7 @@
  * the License.
  */
 
-function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnValium, avsc) {
+function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnValium, avsc, myHelpers, IMPLICIT_SCHEMA) {
   'ngInject';
 
   let vm = this;
@@ -23,8 +23,39 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   let clearDOMTimeoutTick2;
 
   vm.schemaObj = vm.model;
-
   vm.clearDOM = false;
+  vm.implicitSchemaPresent = false;
+
+
+  let watchProperty = myHelpers.objectQuery(vm.config, 'property-watch') || myHelpers.objectQuery(vm.config, 'widget-attributes', 'property-watch');
+
+  if (watchProperty) {
+
+    // changing the format when it is stream
+    // EventPipe.on('dataset.selected', function (schema, format) {
+    //   $scope.pluginProperties[watchProperty] = format;
+    // });
+
+    $scope.$watch(function () {
+      return vm.pluginProperties[watchProperty];
+    }, changeFormat);
+  }
+
+  function changeFormat() {
+    let format = vm.pluginProperties[watchProperty];
+
+    var availableImplicitSchema = Object.keys(IMPLICIT_SCHEMA);
+
+    if (availableImplicitSchema.indexOf(format) === -1) {
+      vm.implicitSchemaPresent = false;
+      return;
+    }
+    vm.clearDOM = true;
+    vm.implicitSchemaPresent = true;
+    vm.schemaObj = IMPLICIT_SCHEMA[format];
+    reRenderComplexSchema();
+  }
+
 
   vm.formatOutput = () => {
     if (typeof vm.schemaObj !== 'string') {
@@ -58,11 +89,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     });
   }
 
-  EventPipe.on('schema.export', exportSchema);
-  EventPipe.on('schema.clear', () => {
-    vm.clearDOM = true;
-
-    vm.schemaObj = '';
+  function reRenderComplexSchema() {
     $timeout.cancel(clearDOMTimeoutTick1);
     $timeout.cancel(clearDOMTimeoutTick2);
     clearDOMTimeoutTick1 = $timeout(() => {
@@ -70,7 +97,14 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
         vm.clearDOM = false;
       }, 500);
     });
+  }
 
+  EventPipe.on('schema.export', exportSchema);
+  EventPipe.on('schema.clear', () => {
+    vm.clearDOM = true;
+
+    vm.schemaObj = '';
+    reRenderComplexSchema();
   });
 
   EventPipe.on('schema.import', (data) => {
@@ -108,14 +142,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       return;
     }
 
-    $timeout.cancel(clearDOMTimeoutTick1);
-    $timeout.cancel(clearDOMTimeoutTick2);
-    clearDOMTimeoutTick1 = $timeout(() => {
-      clearDOMTimeoutTick2 = $timeout(() => {
-        vm.clearDOM = false;
-      }, 500);
-    });
-
+    reRenderComplexSchema();
   });
 
   $scope.$on('$destroy', () => {
@@ -137,7 +164,9 @@ angular.module(PKG.name + '.commons')
       bindToController: true,
       scope: {
         model: '=ngModel',
-        isDisabled: '='
+        isDisabled: '=',
+        pluginProperties: '=?',
+        config: '=?'
       },
       controller: ComplexSchemaEditorController,
       controllerAs: 'SchemaEditor'

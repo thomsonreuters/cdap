@@ -84,7 +84,9 @@
       <my-complex-schema-editor
         ng-if="::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Stream'"
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
-        is-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema">
+        is-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
+        plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
+        config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties">
       </my-complex-schema-editor>
       <my-schema-editor-stream
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
