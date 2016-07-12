@@ -63,7 +63,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
       URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms/");
       KeyProvider provider = KeyProviderFactory.get(providerUri, conf);
       final KeyProvider.Options options = KeyProvider.options(conf);
-      String keyName = "TestKey1";
+      String keyName = "testkey1";
       options.setDescription(keyName);
       options.setBitLength(128);
       provider.createKey(keyName, options);
