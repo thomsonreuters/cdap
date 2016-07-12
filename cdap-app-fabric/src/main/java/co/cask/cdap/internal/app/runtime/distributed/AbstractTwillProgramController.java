@@ -60,7 +60,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
                          "/tmp/yarn.keytab");
       conf.set("hadoop.kms.authentication.kerberos.principal", "yarn");
       conf.set("hadoop.kms.authentication.kerberos.name.rules", "DEFAULT");
-      URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms/v1/");
+      URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms/");
       KeyProvider provider = KeyProviderFactory.get(providerUri, conf);
       final KeyProvider.Options options = KeyProvider.options(conf);
       String keyName = "TestKey1";
@@ -74,6 +74,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
         LOG.warn("nsquare: " + k);
       }
     } catch (IOException | URISyntaxException | NoSuchAlgorithmException e) {
+      LOG.warn("nsquare: " + e.getMessage());
       e.printStackTrace();
     }
   }
