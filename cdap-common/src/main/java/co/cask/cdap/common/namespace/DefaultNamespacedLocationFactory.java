@@ -59,7 +59,7 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
   public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
     String hdfsDirectory = null;
     try {
-      hdfsDirectory = namespaceQueryAdmin.get(namespaceId).getConfig().getHdfsDirectory();
+      hdfsDirectory = namespaceQueryAdmin.get(namespaceId).getConfig().getRootDirectory();
     } catch (Exception e) {
       Throwables.propagate(e);
     }

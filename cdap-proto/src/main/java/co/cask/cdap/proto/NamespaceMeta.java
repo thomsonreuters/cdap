@@ -70,7 +70,7 @@ public final class NamespaceMeta {
       this.name = meta.getName();
       this.description = meta.getDescription();
       this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
-      this.hdfsDirectory = meta.getConfig().getHdfsDirectory();
+      this.hdfsDirectory = meta.getConfig().getRootDirectory();
       this.hbaseNamespace = meta.getConfig().getHbaseNamespace();
       this.hiveDatabase = meta.getConfig().getHiveDatabase();
     }

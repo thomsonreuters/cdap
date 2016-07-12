@@ -29,8 +29,8 @@ public class NamespaceConfig {
   @SerializedName("scheduler.queue.name")
   private final String schedulerQueueName;
 
-  @SerializedName("hdfs.directory")
-  private final String hdfsDirectory;
+  @SerializedName("root.directory")
+  private final String rootDirectory;
 
   @SerializedName("hbase.namespace")
   private final String hbaseNamespace;
@@ -38,10 +38,10 @@ public class NamespaceConfig {
   @SerializedName("hive.database")
   private final String hiveDatabase;
 
-  public NamespaceConfig(@Nullable String schedulerQueueName, @Nullable String hdfsDirectory, @Nullable String
-    hbaseNamespace, @Nullable String hiveDatabase) {
+  public NamespaceConfig(@Nullable String schedulerQueueName, @Nullable String rootDirectory,
+                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase) {
     this.schedulerQueueName = schedulerQueueName;
-    this.hdfsDirectory = hdfsDirectory;
+    this.rootDirectory = rootDirectory;
     this.hbaseNamespace = hbaseNamespace;
     this.hiveDatabase = hiveDatabase;
   }
@@ -51,8 +51,8 @@ public class NamespaceConfig {
     return schedulerQueueName;
   }
 
-  public String getHdfsDirectory() {
-    return hdfsDirectory;
+  public String getRootDirectory() {
+    return rootDirectory;
   }
 
   @Nullable
@@ -75,20 +75,20 @@ public class NamespaceConfig {
     }
     NamespaceConfig other = (NamespaceConfig) o;
     return Objects.equals(schedulerQueueName, other.schedulerQueueName) &&
-      Objects.equals(hdfsDirectory, other.hdfsDirectory) && Objects.equals(hbaseNamespace, other.hbaseNamespace) &&
+      Objects.equals(rootDirectory, other.rootDirectory) && Objects.equals(hbaseNamespace, other.hbaseNamespace) &&
       Objects.equals(hiveDatabase, other.hiveDatabase);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schedulerQueueName, hdfsDirectory, hbaseNamespace, hiveDatabase);
+    return Objects.hash(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase);
   }
 
   @Override
   public String toString() {
     return "NamespaceConfig{" +
       "schedulerQueueName='" + schedulerQueueName + '\'' +
-      ", hdfsDirectory='" + hdfsDirectory + '\'' +
+      ", rootDirectory='" + rootDirectory + '\'' +
       ", hbaseNamespace='" + hbaseNamespace + '\'' +
       ", hiveDatabase='" + hiveDatabase + '\'' +
       '}';
