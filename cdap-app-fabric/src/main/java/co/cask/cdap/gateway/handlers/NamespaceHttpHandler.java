@@ -119,13 +119,13 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
         if (!Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
           builder.setSchedulerQueueName(config.getSchedulerQueueName());
         }
-        if (!Strings.isNullOrEmpty(config.getHdfsDirectory())) {
-          if (!new File(config.getHdfsDirectory()).isAbsolute()) {
+        if (!Strings.isNullOrEmpty(config.getRootDirectory())) {
+          if (!new File(config.getRootDirectory()).isAbsolute()) {
             throw new BadRequestException(String.format("Cannot create the namespace '%s' with the given custom " +
                                                           "location %s. Custom location must be absolute path.",
-                                                        namespaceId, config.getHdfsDirectory()));
+                                                        namespaceId, config.getRootDirectory()));
           }
-          builder.setHdfsDirectory(config.getHdfsDirectory());
+          builder.setHdfsDirectory(config.getRootDirectory());
         }
         if (!Strings.isNullOrEmpty(config.getHbaseNamespace())) {
           builder.setHbaseNamespace(config.getHbaseNamespace());
