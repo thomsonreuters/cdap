@@ -234,6 +234,7 @@ public final class Constants {
    */
   public static final class Dataset {
 
+    public static final String CDAP_VERSION = "cdap.version";
     public static final String TABLE_PREFIX = "dataset.table.prefix";
 
     // Table dataset property that defines whether table is transactional or not.
