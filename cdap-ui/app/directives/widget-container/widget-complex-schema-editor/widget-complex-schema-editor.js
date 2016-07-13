@@ -89,11 +89,9 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     var schema = JSON.parse(vm.model);
     schema = schema.fields;
 
-    angular.forEach(schema, function (field) {
-      if (field.readonly) {
-        delete field.readonly;
-      }
-    });
+    if (vm.pluginName === 'Stream') {
+      schema = vm.schemaPrefix.fields.concat(schema);
+    }
 
     var blob = new Blob([JSON.stringify(schema, null, 4)], { type: 'application/json'});
     vm.url = URL.createObjectURL(blob);
@@ -114,6 +112,14 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
         vm.clearDOM = false;
       }, 500);
     });
+  }
+
+  function modifyStreamSchema(record) {
+    if (record.fields && record.fields.length === 0) { return; }
+
+    if (record.fields[0].name === 'ts' && record.fields[1].name === 'headers') {
+      record.fields = record.fields.slice(2);
+    }
   }
 
   // changing the format when it is stream
@@ -146,10 +152,8 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
           fields: jsonSchema
         };
 
-        vm.schemaObj = avsc.parse(recordTypeSchema, { wrapUnions: true });
-      } else if (jsonSchema.type === 'record') {
-        vm.schemaObj = avsc.parse(jsonSchema, { wrapUnions: true });
-      } else {
+        jsonSchema = recordTypeSchema;
+      } else if (jsonSchema.type !== 'record'){
         myAlertOnValium.show({
           type: 'danger',
           content: 'Imported schema is not a valid Avro schema'
@@ -157,6 +161,13 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
         vm.clearDOM = false;
         return;
       }
+
+      if (vm.pluginName === 'Stream') {
+        modifyStreamSchema(jsonSchema);
+      }
+
+      vm.schemaObj = avsc.parse(jsonSchema, { wrapUnions: true });
+
     } catch (e) {
       myAlertOnValium.show({
         type: 'danger',

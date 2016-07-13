@@ -254,8 +254,7 @@ class HydratorPlusPlusHydratorService {
 
         properties.push({
           name: p.name,
-          type: p.nullable ? [property, 'null'] : property,
-          readonly: p.readonly
+          type: p.nullable ? [property, 'null'] : property
         });
       }
     });
