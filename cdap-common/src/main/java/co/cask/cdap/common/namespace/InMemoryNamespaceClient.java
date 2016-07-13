@@ -49,7 +49,8 @@ public class InMemoryNamespaceClient extends AbstractNamespaceClient {
   }
 
   @Override
-  public NamespaceMeta get(final Id.Namespace namespaceId) throws Exception {
+  public NamespaceMeta get(final Id.Namespace namespaceId) throws NamespaceNotFoundException, IOException,
+    UnauthenticatedException {
     Iterable<NamespaceMeta> filtered = Iterables.filter(namespaces, new Predicate<NamespaceMeta>() {
       @Override
       public boolean apply(NamespaceMeta input) {

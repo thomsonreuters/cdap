@@ -150,7 +150,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade),
+                                                                        exploreFacade, namespaceQueryAdmin),
                                  namespaceQueryAdmin
     );
     // Start dataset service, wait for it to be discoverable

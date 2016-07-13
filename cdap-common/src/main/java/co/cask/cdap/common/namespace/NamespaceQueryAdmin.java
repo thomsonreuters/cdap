@@ -17,9 +17,11 @@
 package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -39,8 +41,10 @@ public interface NamespaceQueryAdmin {
    * @param namespaceId the {@link Id.Namespace} of the requested namespace
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
+   * @throws IOException if failed to get a namespace
+   * @throws UnauthenticatedException if the user is not authenticated
    */
-  NamespaceMeta get(Id.Namespace namespaceId) throws Exception;
+  NamespaceMeta get(Id.Namespace namespaceId) throws NamespaceNotFoundException, IOException, UnauthenticatedException;
 
   /**
    * Checks if the specified namespace exists.

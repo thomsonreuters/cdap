@@ -79,7 +79,7 @@ public abstract class StreamConsumerTestBase {
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
 
-  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws Exception {
     namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
     namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
   }

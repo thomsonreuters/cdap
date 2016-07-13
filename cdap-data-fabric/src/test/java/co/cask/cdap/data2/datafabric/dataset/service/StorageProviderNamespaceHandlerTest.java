@@ -16,9 +16,14 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,16 +34,24 @@ import java.io.IOException;
  */
 public class StorageProviderNamespaceHandlerTest extends DatasetServiceTestBase {
 
+  private static final Gson GSON = new GsonBuilder().create();
+
   @Test
-  public void test() throws IOException {
+  public void test() throws Exception {
+    // first add the namespace meta
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName("myspace").build());
+    // creating the namesapce in underlying storage provider should work
     Assert.assertEquals(200, createNamespace("myspace").getResponseCode());
-    // creation is idempotent, now that we delete the namespace directory if it exists
-    Assert.assertEquals(200, createNamespace("myspace").getResponseCode());
+    // Since the namespace directory already exist this creating the same should fail
+    Assert.assertEquals(500, createNamespace("myspace").getResponseCode());
+    // should be able to delete the namespace
     Assert.assertEquals(200, deleteNamespace("myspace").getResponseCode());
   }
 
   private HttpResponse createNamespace(String namespaceId) throws IOException {
-    HttpRequest request = HttpRequest.put(getStorageProviderNamespaceAdminUrl(namespaceId, "create")).build();
+    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, getStorageProviderNamespaceAdminUrl(namespaceId,
+                                                                                                  "create"))
+      .withBody(GSON.toJson(new NamespaceConfig())).build();
     return HttpRequests.execute(request);
   }
 

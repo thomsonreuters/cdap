@@ -480,7 +480,11 @@ public class FileStreamAdmin implements StreamAdmin {
    * Returns the location for the given namespace that contains all streams belong to that namespace.
    */
   private Location getStreamBaseLocation(Id.Namespace namespace) throws IOException {
-    return namespacedLocationFactory.get(namespace).append(streamBaseDirPath);
+    try {
+      return namespacedLocationFactory.get(namespace).append(streamBaseDirPath);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private void doTruncate(final Id.Stream streamId, final Location streamLocation) throws Exception {

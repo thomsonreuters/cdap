@@ -95,7 +95,7 @@ public class OpenCloseDataSetTest {
   };
 
   @BeforeClass
-  public static void setup() throws IOException {
+  public static void setup() throws Exception {
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
     namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE);

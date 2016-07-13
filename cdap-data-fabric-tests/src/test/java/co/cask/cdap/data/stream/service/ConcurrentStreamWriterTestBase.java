@@ -282,7 +282,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     return new LocationStreamFileWriterFactory(cConf);
   }
 
-  private FileInfo generateFile(NamespacedLocationFactory locationFactory, int id, int events) throws IOException {
+  private FileInfo generateFile(NamespacedLocationFactory locationFactory, int id, int events) throws Exception {
     Id.Namespace dummyNs = Id.Namespace.from("dummy");
     Location eventLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
     Location indexLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
