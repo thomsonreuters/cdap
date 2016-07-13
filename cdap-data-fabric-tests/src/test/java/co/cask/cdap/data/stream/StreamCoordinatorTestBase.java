@@ -29,7 +29,6 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -52,7 +51,7 @@ public abstract class StreamCoordinatorTestBase {
 
   protected abstract StreamAdmin getStreamAdmin();
 
-  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws Exception {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create
     namespacedLocationFactory.get(Id.Namespace.DEFAULT).mkdirs();

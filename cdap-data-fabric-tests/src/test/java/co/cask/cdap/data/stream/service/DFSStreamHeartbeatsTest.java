@@ -106,7 +106,7 @@ public class DFSStreamHeartbeatsTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws Exception {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
@@ -174,7 +174,7 @@ public class DFSStreamHeartbeatsTest {
   }
 
   @AfterClass
-  public static void afterClass() throws IOException {
+  public static void afterClass() throws Exception {
     Locations.deleteQuietly(namespacedLocationFactory.get(Id.Namespace.DEFAULT), true);
 
     notificationService.startAndWait();

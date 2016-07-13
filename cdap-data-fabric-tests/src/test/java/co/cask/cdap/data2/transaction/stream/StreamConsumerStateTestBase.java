@@ -44,7 +44,7 @@ public abstract class StreamConsumerStateTestBase {
   protected static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("streamConsumerStateTestNamespace");
   protected static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
 
-  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws Exception {
     namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
     namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
   }

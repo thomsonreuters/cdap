@@ -16,12 +16,13 @@
 
 package co.cask.cdap.common.namespace;
 
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 
@@ -51,18 +52,16 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
   }
 
   @Override
-  public Location get(Id.Namespace namespaceId) throws IOException {
+  public Location get(Id.Namespace namespaceId) throws IOException, NamespaceNotFoundException,
+    UnauthenticatedException {
     return get(namespaceId, null);
   }
 
   @Override
-  public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException {
+  public Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException,
+    NamespaceNotFoundException, UnauthenticatedException {
     String hdfsDirectory = null;
-    try {
-      hdfsDirectory = namespaceQueryAdmin.get(namespaceId).getConfig().getRootDirectory();
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    }
+    hdfsDirectory = namespaceQueryAdmin.get(namespaceId).getConfig().getRootDirectory();
     Location namespaceLocation;
     if (Strings.isNullOrEmpty(hdfsDirectory)) {
       // if no custom mapping was specified the use the default namespaces location on hdfs

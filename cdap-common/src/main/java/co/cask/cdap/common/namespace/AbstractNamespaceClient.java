@@ -62,7 +62,8 @@ public abstract class AbstractNamespaceClient implements NamespaceAdmin {
   }
 
   @Override
-  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
+  public NamespaceMeta get(Id.Namespace namespaceId) throws NamespaceNotFoundException, IOException,
+    UnauthenticatedException {
     HttpResponse response =
       execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId.getId()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

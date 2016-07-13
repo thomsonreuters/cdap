@@ -38,8 +38,6 @@ import com.google.inject.util.Modules;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
-
 /**
  *
  */
@@ -49,7 +47,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
   private static StreamCoordinatorClient coordinatorClient;
 
   @BeforeClass
-  public static void init() throws IOException {
+  public static void init() throws Exception {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(

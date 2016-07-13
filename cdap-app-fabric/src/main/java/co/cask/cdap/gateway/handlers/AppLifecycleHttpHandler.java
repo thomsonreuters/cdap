@@ -27,6 +27,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
@@ -305,7 +306,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          final String archiveName,
                                          final String configString) throws IOException {
 
-    Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
+    Location namespaceHomeLocation = null;
+    try {
+      namespaceHomeLocation = namespacedLocationFactory.get(namespace);
+    } catch (NamespaceNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (UnauthenticatedException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+    }
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
                                  namespaceHomeLocation, namespace.getId());

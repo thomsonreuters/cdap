@@ -17,6 +17,8 @@
 package co.cask.cdap.common.namespace;
 
 
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 
@@ -33,8 +35,10 @@ public interface NamespacedLocationFactory {
    *
    * @param namespaceId the namespace for which base location is desired
    * @return {@link Location} for the specified namespace on the filesystem
+   * @throws NamespaceNotFoundException if the namespace with the given name namespaceId was found
+   * @throws UnauthenticatedException if the user is not authenticated
    */
-  Location get(Id.Namespace namespaceId) throws IOException;
+  Location get(Id.Namespace namespaceId) throws IOException, NamespaceNotFoundException, UnauthenticatedException;
 
   /**
    * Returns a {@link Location} for the specified sub-path in the specified namespace
@@ -42,8 +46,11 @@ public interface NamespacedLocationFactory {
    * @param namespaceId the namespace for which the {@link Location} is desired
    * @param subPath the sub-path under the base location of the specified namespace
    * @return {@link Location} for the specified sub-path in the specified namespace
+   * @throws NamespaceNotFoundException if the namespace with the given name namespaceId was found
+   * @throws UnauthenticatedException if the user is not authenticated
    */
-  Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException;
+  Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException, NamespaceNotFoundException,
+    UnauthenticatedException;
 
   /**
    * Returns the base {@link Location} for all CDAP data.

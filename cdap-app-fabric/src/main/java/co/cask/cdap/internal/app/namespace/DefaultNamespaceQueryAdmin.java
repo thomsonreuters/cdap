@@ -18,12 +18,14 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Inject;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -56,7 +58,8 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
    * @throws NamespaceNotFoundException if the requested namespace is not found
    */
   @Override
-  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
+  public NamespaceMeta get(Id.Namespace namespaceId) throws NamespaceNotFoundException, IOException,
+    UnauthenticatedException {
     NamespaceMeta ns = nsStore.get(namespaceId);
     if (ns == null) {
       throw new NamespaceNotFoundException(namespaceId);

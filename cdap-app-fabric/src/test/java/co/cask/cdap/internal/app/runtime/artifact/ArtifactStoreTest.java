@@ -77,7 +77,7 @@ public class ArtifactStoreTest {
   }
 
   @After
-  public void cleanup() throws IOException {
+  public void cleanup() throws Exception {
     artifactStore.clear(NamespaceId.DEFAULT);
   }
 

@@ -106,7 +106,7 @@ public abstract class DatasetServiceTestBase {
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   private LocationFactory locationFactory;
-  private NamespaceAdmin namespaceAdmin;
+  protected NamespaceAdmin namespaceAdmin;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
   protected InMemoryDatasetFramework inMemoryDatasetFramework;
@@ -211,7 +211,7 @@ public abstract class DatasetServiceTestBase {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade), namespaceAdmin);
+                                                                        exploreFacade, namespaceAdmin), namespaceAdmin);
 
     // Start dataset service, wait for it to be discoverable
     service.start();

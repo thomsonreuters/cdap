@@ -58,7 +58,7 @@ public abstract class StreamAdminTest {
 
   protected abstract InMemoryAuditPublisher getInMemoryAuditPublisher();
 
-  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws Exception {
     namespacedLocationFactory.get(Id.Namespace.from(FOO_NAMESPACE)).mkdirs();
     namespacedLocationFactory.get(Id.Namespace.from(OTHER_NAMESPACE)).mkdirs();
   }

@@ -130,16 +130,13 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     }
 
-    // store the metadata first and then create namespaces in the storage handler.
-    // TODO (CDAP-6155): this will be switched back to original when we do hbase mapping where we will start passing the
-    // NamespaceMeta itself to the DatasetFramework. We should first create namespaces in underlying storage before
-    // storing the namespace meta.
-    nsStore.create(metadata);
     try {
       dsFramework.createNamespace(metadata);
     } catch (DatasetManagementException e) {
       throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
     }
+
+    nsStore.create(metadata);
 
     // Skip authorization grants for the system user
     if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {

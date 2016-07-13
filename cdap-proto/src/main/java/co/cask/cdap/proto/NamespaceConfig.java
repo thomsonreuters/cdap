@@ -46,6 +46,10 @@ public class NamespaceConfig {
     this.hiveDatabase = hiveDatabase;
   }
 
+  public NamespaceConfig() {
+    this(null, null, null, null);
+  }
+
   @Nullable
   public String getSchedulerQueueName() {
     return schedulerQueueName;

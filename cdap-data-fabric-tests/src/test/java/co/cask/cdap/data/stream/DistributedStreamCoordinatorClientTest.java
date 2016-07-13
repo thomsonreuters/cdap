@@ -45,8 +45,6 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
-
 /**
  * Tests for {@link DistributedStreamCoordinatorClient}
  */
@@ -59,7 +57,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
   private static StreamCoordinatorClient coordinatorClient;
 
   @BeforeClass
-  public static void init() throws IOException {
+  public static void init() throws Exception {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
     zkServer.startAndWait();
 

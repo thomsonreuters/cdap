@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.namespace;
 
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -45,7 +46,8 @@ public class LocalNamespaceClient extends AbstractNamespaceClient {
   }
 
   @Override
-  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
+  public NamespaceMeta get(Id.Namespace namespaceId) throws NamespaceNotFoundException, IOException,
+    UnauthenticatedException {
     return namespaceAdmin.get(namespaceId);
   }
 

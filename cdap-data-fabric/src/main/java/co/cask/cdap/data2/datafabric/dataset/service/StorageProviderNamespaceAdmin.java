@@ -16,19 +16,23 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Joiner;
+import co.cask.cdap.proto.NamespaceConfig;
+import com.google.common.base.Strings;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
 
 /**
@@ -40,12 +44,14 @@ public class StorageProviderNamespaceAdmin {
   private final CConfiguration cConf;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ExploreFacade exploreFacade;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   protected StorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
-                                          ExploreFacade exploreFacade) {
+                                          ExploreFacade exploreFacade, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.cConf = cConf;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.exploreFacade = exploreFacade;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -56,18 +62,17 @@ public class StorageProviderNamespaceAdmin {
    *
    * @param namespaceId {@link Id.Namespace} for the namespace to create
    * @throws IOException if there are errors while creating the namespace
+   * @throws NamespaceNotFoundException if the namespace was not found
+   * @throws UnauthenticatedException if the user was unauthenticated
    */
-  protected void create(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
-    Location namespaceHome = namespacedLocationFactory.get(namespaceId);
-    // TODO (CDAP-6155): This is not clean. Once we do hbase mapping the DatasetFramework will pass down the
-    // NamespaceMeta to this create and we should look for the custom location in the config rather than
-    // checking like this.
-    if (namespaceHome.toString().endsWith(Joiner.on(File.separator).join(cConf.get(Constants.Namespace.NAMESPACES_DIR),
-                                                                         namespaceId.getId()))) {
-      // no namespace custom location was provided
+  protected void create(Id.Namespace namespaceId, NamespaceConfig namespaceConfig) throws IOException, ExploreException,
+    SQLException, NamespaceNotFoundException, UnauthenticatedException {
+    Location namespaceHome;
+    if (Strings.isNullOrEmpty(namespaceConfig.getHbaseNamespace())) {
+      // no namespace custom location was provided one must be created by cdap
+      namespaceHome = namespacedLocationFactory.get(namespaceId);
       if (namespaceHome.exists()) {
-        throw new IOException(String.format("Home directory '%s' for namespace '%s' already exists.",
-                                            namespaceHome, namespaceId.getId()));
+        throw new FileAlreadyExistsException(namespaceHome.toString());
 
       }
       // create namespace home dir
@@ -75,14 +80,13 @@ public class StorageProviderNamespaceAdmin {
         throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
                                             namespaceHome, namespaceId));
       }
-
     } else {
+      namespaceHome = namespacedLocationFactory.getBaseLocation().append(namespaceConfig.getHbaseNamespace());
       // a custom location was provided so we expect it to exists
       if (!namespaceHome.exists()) {
         throw new IOException(String.format("The provided home directory '%s' for namespace '%s' does exists. Please " +
-                                              "create it on filesystem and then try creating a namesapce.",
-                                            namespaceHome, namespaceId.getId()));
-
+                                              "create it on filesystem with sufficint privileges for the user and " +
+                                              "then try creating a namespace.", namespaceHome, namespaceId.getId()));
       }
     }
 
@@ -99,15 +103,14 @@ public class StorageProviderNamespaceAdmin {
    *
    * @param namespaceId {@link Id.Namespace} for the namespace to delete
    * @throws IOException if there are errors while deleting the namespace
+   * @throws NamespaceNotFoundException if the namespace was not found
+   * @throws UnauthenticatedException if the user was unauthenticated
    */
-  protected void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
+  protected void delete(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException,
+    NamespaceNotFoundException, UnauthenticatedException {
     // TODO: CDAP-1581: Implement soft delete
     Location namespaceHome = namespacedLocationFactory.get(namespaceId);
-    // TODO (CDAP-6155): This is not clean. Once we do hbase mapping the DatasetFramework will pass down the
-    // NamespaceMeta to this delete and we should look for the custom location in the config there rather than
-    // checking like this.
-    if (namespaceHome.toString().endsWith(Joiner.on(File.separator).join(cConf.get(Constants.Namespace.NAMESPACES_DIR),
-                                                                         namespaceId.getId()))) {
+    if (Strings.isNullOrEmpty(namespaceQueryAdmin.get(namespaceId).getConfig().getHbaseNamespace())) {
       if (namespaceHome.exists()) {
         if (!namespaceHome.delete(true)) {
           throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",

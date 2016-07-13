@@ -32,6 +32,8 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -625,8 +627,13 @@ public class ArtifactStore {
       }
     }
 
-    Location fileDirectory =
-      namespacedLocationFactory.get(artifactId.getNamespace(), ARTIFACTS_PATH).append(artifactId.getName());
+    Location fileDirectory = null;
+    try {
+      fileDirectory = namespacedLocationFactory.get(artifactId.getNamespace(),
+                                                    ARTIFACTS_PATH).append(artifactId.getName());
+    } catch (NamespaceNotFoundException | UnauthenticatedException e) {
+      throw Throwables.propagate(e);
+    }
     Locations.mkdirsIfNotExists(fileDirectory);
 
     // write the file contents
@@ -714,7 +721,7 @@ public class ArtifactStore {
    * @throws IOException if there was some problem deleting the data
    */
   @VisibleForTesting
-  void clear(final NamespaceId namespace) throws IOException {
+  void clear(final NamespaceId namespace) throws IOException, NamespaceNotFoundException, UnauthenticatedException {
     namespacedLocationFactory.get(namespace.toId(), ARTIFACTS_PATH).delete(true);
 
     metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
