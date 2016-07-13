@@ -26,10 +26,13 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -38,9 +41,11 @@ import java.sql.SQLException;
  * Manages namespaces on underlying systems - HDFS, HBase, Hive, etc.
  */
 public final class DistributedStorageProviderNamespaceAdmin extends StorageProviderNamespaceAdmin {
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedStorageProviderNamespaceAdmin.class);
 
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private HBaseAdmin hBaseAdmin;
 
   @Inject
@@ -51,6 +56,7 @@ public final class DistributedStorageProviderNamespaceAdmin extends StorageProvi
     super(cConf, namespacedLocationFactory, exploreFacade, namespaceQueryAdmin);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -59,8 +65,18 @@ public final class DistributedStorageProviderNamespaceAdmin extends StorageProvi
     // create filesystem directory
     super.create(namespaceId, namespaceConfig);
     // TODO: CDAP-1519: Create base directory for filesets under namespace home
-    // create HBase namespace
-    tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceId);
+
+    if (Strings.isNullOrEmpty(namespaceConfig.getHbaseNamespace())) {
+      // no custom namespace location was provided, hence one must be created by cdap
+      tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceId);
+    } else {
+      // a custom namespace was provided, so we expect it to exist. if not throw an exception
+      if (!tableUtil.hasNamespace(getAdmin(), Id.Namespace.from(namespaceConfig.getHbaseNamespace()))) {
+        throw new IOException(String.format("Provided HBase Namespace '%s' for namespace '%s' doesn't exist. Please" +
+                                              "create the namespace on HBase and then try creating a CDAP namespace.",
+                                            namespaceConfig.getHbaseNamespace(), namespaceId.getId()));
+      }
+    }
   }
 
   @Override
@@ -68,8 +84,17 @@ public final class DistributedStorageProviderNamespaceAdmin extends StorageProvi
     NamespaceNotFoundException, UnauthenticatedException {
     // soft delete namespace directory from filesystem
     super.delete(namespaceId);
-    // delete HBase namespace
-    tableUtil.deleteNamespaceIfExists(getAdmin(), Id.Namespace.from(namespaceId.getId()));
+    NamespaceConfig namespaceConfig = namespaceQueryAdmin.get(namespaceId).getConfig();
+
+    if (Strings.isNullOrEmpty(namespaceConfig.getHbaseNamespace())) {
+      // delete HBase namespace
+      tableUtil.deleteNamespaceIfExists(getAdmin(), Id.Namespace.from(namespaceId.getId()));
+    } else {
+      // custom namespace mapping is set for HBase, hence don't do anything during delete since the lifecycle of the
+      // namespace will be managed by the user
+      LOG.warn("Custom HBase mapping {} was found while deleting namespace {}. Hence skipping deletion of " +
+                 "HBase namespace", namespaceConfig.getHbaseNamespace(), namespaceId.getId());
+    }
   }
 
   private HBaseAdmin getAdmin() throws IOException {
