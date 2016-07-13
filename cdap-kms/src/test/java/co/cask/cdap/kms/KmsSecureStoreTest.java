@@ -77,5 +77,4 @@ public class KmsSecureStoreTest {
   public void get() throws Exception {
 
   }
-
 }

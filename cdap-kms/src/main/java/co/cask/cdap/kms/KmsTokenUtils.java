@@ -27,6 +27,9 @@ import org.apache.hadoop.security.token.TokenIdentifier;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+/**
+ *
+ */
 public class KmsTokenUtils {
 
   public static Credentials obtainToken(Configuration conf, Credentials credentials) {
