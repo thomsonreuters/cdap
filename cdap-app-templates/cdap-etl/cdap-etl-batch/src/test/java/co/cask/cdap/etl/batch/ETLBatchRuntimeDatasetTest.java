@@ -30,9 +30,11 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.WorkflowManager;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,15 +43,15 @@ import java.util.concurrent.TimeUnit;
 public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
 
   @Test
-  public void testDatasetCreationInMapReducePipelinePrepareRun() throws Exception {
+  public void testRuntimeMacrosAndDatasetMapReducePipeline() throws Exception {
     /*
      * Trivial MapReduce pipeline from batch source to batch sink.
      *
      * source --------- sink
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput")))
-      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput")))
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("mrinput", "${runtime${source}}")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("mroutput", "${runtime}${sink}")))
       .addConnection("source", "sink")
       .build();
 
@@ -57,7 +59,14 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MRApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("runtime", "mockRuntime",
+                                                                           "sink", "SinkDataset",
+                                                                           "source", "Source",
+                                                                           "runtimeSource", "mockRuntimeSourceDataset");
+
     MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
+    mrManager.setRuntimeArgs(runtimeArguments);
     mrManager.start();
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
 
@@ -66,7 +75,7 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
   }
 
   @Test
-  public void testDatasetCreationInSparkPipelinePrepareRun() throws Exception {
+  public void testRuntimeMacrosAndDatasetSparkPipeline() throws Exception {
     /*
      * Trivial Spark pipeline from batch source to batch sink.
      *
@@ -74,8 +83,8 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .setEngine(Engine.SPARK)
-      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("sparkinput")))
-      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("sparkoutput")))
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("sparkinput", "${runtime${source}}")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("sparkoutput", "${runtime}${sink}")))
       .addConnection("source", "sink")
       .build();
 
@@ -83,7 +92,14 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SparkApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    // set runtime arguments for macro substitution
+    Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("runtime", "mockRuntime",
+                                                                           "sink", "SinkDataset",
+                                                                           "source", "Source",
+                                                                           "runtimeSource", "mockRuntimeSourceDataset");
+
     WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    workflowManager.setRuntimeArgs(runtimeArguments);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 

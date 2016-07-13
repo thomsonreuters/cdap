@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -41,11 +42,25 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
   @Override
   @Nullable
   public String lookup(String property) {
-    Value tokenValue = workflowToken.get(property);
-    if (tokenValue != null) {
-      return tokenValue.toString();
+    // try workflow token
+    if (workflowToken != null) {
+      Value tokenValue = workflowToken.get(property);
+      if (tokenValue != null) {
+        return tokenValue.toString();
+      }
     }
-    return runtimeArguments.get(property);
+
+    // try runtime arguments
+    if (runtimeArguments != null) {
+      String runtimeArgumentMacro = runtimeArguments.get(property);
+      if (runtimeArgumentMacro == null) {
+        throw new InvalidMacroException(String.format("Macro '%s' not defined.", runtimeArgumentMacro));
+      }
+      return runtimeArgumentMacro;
+    }
+
+    // should never get here given that workflowToken and runtimeArguments are not null
+    throw new InvalidMacroException(String.format("Unable to lookup property '%s'.", property));
   }
 
   @Override

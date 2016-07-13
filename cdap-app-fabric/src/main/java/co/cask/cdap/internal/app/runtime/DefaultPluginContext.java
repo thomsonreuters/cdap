@@ -99,8 +99,19 @@ public class DefaultPluginContext implements PluginContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException {
-    // todo : use pluginInstantiator#newPluginInstance(String pluginId, MacroEvaluator evaluator)
-    return newPluginInstance(pluginId);
+    try {
+      Plugin plugin = getPlugin(pluginId);
+      if (pluginInstantiator == null) {
+        throw new UnsupportedOperationException("Plugin is not supported");
+      }
+      return pluginInstantiator.newInstance(plugin, evaluator);
+    } catch (ClassNotFoundException e) {
+      // Shouldn't happen, unless there is bug in file localization
+      throw new IllegalArgumentException("Plugin class not found", e);
+    } catch (IOException e) {
+      // This is fatal, since jar cannot be expanded.
+      throw Throwables.propagate(e);
+    }
   }
 
   private Plugin getPlugin(String pluginId) {
