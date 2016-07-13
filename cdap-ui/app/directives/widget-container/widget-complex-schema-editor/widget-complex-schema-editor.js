@@ -122,7 +122,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     }
   }
 
-  // changing the format when it is stream
   EventPipe.on('dataset.selected', function (schema, format) {
     if (watchProperty && format) {
       vm.pluginProperties[watchProperty] = format;
