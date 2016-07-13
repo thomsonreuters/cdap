@@ -27,6 +27,8 @@ import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.security.ImpersonationUserResolver;
+import co.cask.cdap.data2.security.ImpersonationUtils;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -80,14 +82,15 @@ public class DatasetService extends AbstractExecutionThreadService {
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetInstanceService datasetInstanceService,
                         StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                        NamespaceStore namespaceStore) throws Exception {
+                        NamespaceStore namespaceStore,
+                        ImpersonationUserResolver impersonationUserResolver) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory,
                                                                    namespaceStore);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
     StorageProviderNamespaceHandler storageProviderNamespaceHandler =
-      new StorageProviderNamespaceHandler(storageProviderNamespaceAdmin);
+      new StorageProviderNamespaceHandler(cConf, storageProviderNamespaceAdmin, impersonationUserResolver);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
                                              datasetInstanceHandler,

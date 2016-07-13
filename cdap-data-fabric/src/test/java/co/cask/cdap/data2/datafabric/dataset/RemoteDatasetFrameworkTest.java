@@ -45,6 +45,7 @@ import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.security.ImpersonationUserResolver;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
@@ -116,7 +117,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
 
     DatasetAdminService datasetAdminService =
-      new DatasetAdminService(framework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore());
+      new DatasetAdminService(framework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore(),
+                              new ImpersonationUserResolver(cConf, NAMESPACE_STORE, locationFactory));
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
@@ -154,7 +156,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
-                                 NAMESPACE_STORE
+                                 NAMESPACE_STORE,
+                                 new ImpersonationUserResolver(cConf, NAMESPACE_STORE, locationFactory)
     );
     // Start dataset service, wait for it to be discoverable
     service.start();

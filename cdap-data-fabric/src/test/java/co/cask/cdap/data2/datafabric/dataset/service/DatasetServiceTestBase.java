@@ -44,6 +44,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryNamespaceStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.security.ImpersonationUserResolver;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
@@ -167,7 +168,8 @@ public abstract class DatasetServiceTestBase {
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
 
     DatasetAdminService datasetAdminService =
-      new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore());
+      new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore(),
+                              new ImpersonationUserResolver(cConf, namespaceStore, locationFactory));
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
@@ -210,7 +212,8 @@ public abstract class DatasetServiceTestBase {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade), namespaceStore);
+                                                                        exploreFacade), namespaceStore,
+                                 new ImpersonationUserResolver(cConf, namespaceStore, locationFactory));
 
     // Start dataset service, wait for it to be discoverable
     service.start();

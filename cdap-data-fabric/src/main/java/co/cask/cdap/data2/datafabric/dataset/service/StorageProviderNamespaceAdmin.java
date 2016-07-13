@@ -39,8 +39,8 @@ public class StorageProviderNamespaceAdmin {
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ExploreFacade exploreFacade;
 
-  protected StorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
-                                          ExploreFacade exploreFacade) {
+  StorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
+                                ExploreFacade exploreFacade) {
     this.cConf = cConf;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.exploreFacade = exploreFacade;
@@ -66,7 +66,7 @@ public class StorageProviderNamespaceAdmin {
       }
     }
     if (!namespaceHome.mkdirs()) {
-      throw new IOException(String.format("Error while creating home directory '%s' for namesapce '%s'",
+      throw new IOException(String.format("Error while creating home directory '%s' for namespace '%s'",
                                           namespaceHome, namespaceId));
     }
 
