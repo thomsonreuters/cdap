@@ -49,34 +49,6 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     super(programId, runId);
     this.programId = programId;
     this.twillController = twillController;
-    try {
-      LOG.warn("nsquare: Before accessing provider.");
-      Configuration conf = new Configuration();
-      conf.set("hadoop.security.authentication", "kerberos");
-      UserGroupInformation.setConfiguration(conf);
-      conf.set("hadoop.kms.authentication.token.validity", "1");
-      conf.set("hadoop.kms.authentication.type", "kerberos");
-      conf.set("hadoop.kms.authentication.kerberos.keytab",
-                         "/tmp/yarn.keytab");
-      conf.set("hadoop.kms.authentication.kerberos.principal", "yarn");
-      conf.set("hadoop.kms.authentication.kerberos.name.rules", "DEFAULT");
-      URI providerUri = new URI("kms://http@146.234.154.104.bc.googleusercontent.com:16000/kms/");
-      KeyProvider provider = KeyProviderFactory.get(providerUri, conf);
-      final KeyProvider.Options options = KeyProvider.options(conf);
-      String keyName = "testkey1";
-      options.setDescription(keyName);
-      options.setBitLength(128);
-      provider.createKey(keyName, options);
-
-      provider.flush();
-      LOG.warn("nsquare: Before logging the keys.");
-      for (String k :provider.getKeys()) {
-        LOG.warn("nsquare: " + k);
-      }
-    } catch (IOException | URISyntaxException | NoSuchAlgorithmException e) {
-      LOG.warn("nsquare: " + e.getMessage());
-      e.printStackTrace();
-    }
   }
 
   /**
