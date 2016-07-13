@@ -20,13 +20,15 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.JoinConfig;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.Joiner;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Performs join operation
@@ -54,10 +56,15 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
   public void joinRecords() throws Exception {
     Map<String, List<JoinElement<INPUT_RECORD>>> perStageJoinElements = getPerStageJoinElements();
     JoinConfig joinConfig = joiner.getJoinConfig();
-    Iterable<String> requiredInputs = joinConfig.getRequiredInputs();
-    if (Iterables.size(requiredInputs) == numOfInputs) {
-      innerJoin(perStageJoinElements);
+    Set<String> requiredInputs = Sets.newHashSet(joinConfig.getRequiredInputs());
+
+    // As we get intersection of records from all stages present in required inputs, if the number of
+    // stages we got after reduce are less than number of required inputs, then there is nothing to emit.
+    if (perStageJoinElements.size() < requiredInputs.size()) {
+      return;
     }
+
+    join(perStageJoinElements, requiredInputs);
   }
 
   private Map<String, List<JoinElement<INPUT_RECORD>>> getPerStageJoinElements() {
@@ -73,31 +80,34 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
     return perStageJoinElements;
   }
 
-  private void innerJoin(Map<String, List<JoinElement<INPUT_RECORD>>> perStageJoinElements) throws Exception {
-    // As we get intersection of records from n stages in inner join, if the number of stages we got after reduce
-    // are not same as number of stages we are joining, then there is nothing to emit.
-    if (perStageJoinElements.size() != numOfInputs) {
-      return;
-    }
-
+  private void join(Map<String, List<JoinElement<INPUT_RECORD>>> perStageJoinElements, Set<String> requiredInputs)
+    throws Exception {
     List<List<JoinElement<INPUT_RECORD>>> list = new ArrayList<>(perStageJoinElements.values());
     ArrayList<JoinElement<INPUT_RECORD>> joinElements = new ArrayList<>();
-    getCartesianProduct(list, 0, numOfInputs, joinElements);
+    Set<String> includedInputs = new HashSet<>();
+    getCartesianProduct(list, 0, joinElements, includedInputs, requiredInputs);
   }
 
   // TODO use iterative algorithm instead of recursion
-  private void getCartesianProduct(List<List<JoinElement<INPUT_RECORD>>> list, int index, int size,
-                                   List<JoinElement<INPUT_RECORD>> joinElements) throws Exception {
-    if (joinElements.size() == size) {
+  private void getCartesianProduct(List<List<JoinElement<INPUT_RECORD>>> list, int index,
+                                   List<JoinElement<INPUT_RECORD>> joinElements,
+                                   Set<String> includedInputs, Set<String> requiredInputs) throws Exception {
+    // check till the end of the list and emit only if records from all the required inputs are present in joinElements
+    if (index == list.size() && includedInputs.equals(requiredInputs)) {
       emitter.emit(joiner.merge(joinKey, joinElements));
       return;
     }
 
-    List<JoinElement<INPUT_RECORD>> joinElementList = list.get(index);
-    for (int i = 0; i < joinElementList.size(); i++) {
-      joinElements.add(joinElementList.get(i));
-      getCartesianProduct(list, index + 1, size, joinElements);
+    for (JoinElement<INPUT_RECORD> joinElement : list.get(index)) {
+      joinElements.add(joinElement);
+      if (requiredInputs.contains(joinElement.getStageName())) {
+        includedInputs.add(joinElement.getStageName());
+      }
+      getCartesianProduct(list, index + 1, joinElements, includedInputs, requiredInputs);
       joinElements.remove(joinElements.size() - 1);
+      if (requiredInputs.contains(joinElement.getStageName())) {
+        includedInputs.remove(joinElement.getStageName());
+      }
     }
   }
 }
