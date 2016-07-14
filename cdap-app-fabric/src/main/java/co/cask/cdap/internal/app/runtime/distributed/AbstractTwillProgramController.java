@@ -17,8 +17,10 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.kms.KmsSecureStore;
 import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Futures;
+import org.apache.commons.io.Charsets;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
 import org.apache.hadoop.crypto.key.KeyProviderFactory;
@@ -33,6 +35,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A {@link ProgramController} that control program through twill.
@@ -49,8 +53,37 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
     super(programId, runId);
     this.programId = programId;
     this.twillController = twillController;
+    kms();
   }
 
+  private void kms() {
+    LOG.warn("nsquare: Before adding key.");
+    Configuration conf = new Configuration();
+    long time = System.currentTimeMillis();
+    String key1 = String.valueOf(time);
+    LOG.warn("nsquare: Key: " + time);
+    String value1 = "value";
+    String description1 = "This is the first key.";
+    Map<String, String> properties1 = new HashMap<>();
+    LOG.warn("nsquare: Before try.");
+    try {
+      KmsSecureStore kmsSecureStore = new KmsSecureStore(conf);
+      LOG.warn("nsquare: Initialized the store.");
+      conf.set("hadoop.security.authentication", "kerberos");
+      conf.set("hadoop.kms.authentication.token.validity", "1");
+      conf.set("hadoop.kms.authentication.type", "kerberos");
+      conf.set("hadoop.kms.authentication.kerberos.principal", "cdap");
+      conf.set("hadoop.kms.authentication.kerberos.name.rules", "DEFAULT");
+      UserGroupInformation.setConfiguration(conf);
+      LOG.warn("nsquare: Set the config.");
+      kmsSecureStore.put(key1, value1.getBytes(Charsets.UTF_8), description1, properties1);
+      LOG.warn("nsquare: Put the key.");
+      kmsSecureStore.getProvider().flush();
+      LOG.warn("nsquare: After flush.");
+    } catch (IOException | URISyntaxException e) {
+      e.printStackTrace();
+    }
+  }
   /**
    * Get the RunId associated with the Twill controller.
    * @return the Twill RunId

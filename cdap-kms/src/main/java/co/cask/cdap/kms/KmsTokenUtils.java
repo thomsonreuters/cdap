@@ -23,6 +23,8 @@ import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,17 +33,21 @@ import java.net.URISyntaxException;
  *
  */
 public class KmsTokenUtils {
+  private static final Logger LOG = LoggerFactory.getLogger(KmsTokenUtils.class);
 
   public static Credentials obtainToken(Configuration conf, Credentials credentials) {
     conf.set("hadoop.security.authentication", "kerberos");
     conf.set("hadoop.kms.authentication.token.validity", "1");
     conf.set("hadoop.kms.authentication.type", "kerberos");
-    conf.set("hadoop.kms.authentication.kerberos.principal", "cdap");
     conf.set("hadoop.kms.authentication.kerberos.name.rules", "DEFAULT");
     try {
       String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
       KmsSecureStore kmsSecureStore = new KmsSecureStore(conf);
       KeyProvider keyProvider = kmsSecureStore.getProvider();
+      LOG.warn("nsquare: Before logging the keys.");
+      for (String k : keyProvider.getKeys()) {
+        LOG.warn("nsquare: " + k);
+      }
       KeyProviderDelegationTokenExtension keyProviderDelegationTokenExtension =
         KeyProviderDelegationTokenExtension.
           createKeyProviderDelegationTokenExtension(keyProvider);
