@@ -105,7 +105,7 @@ public abstract class DatasetServiceTestBase {
   private InMemoryDiscoveryService discoveryService;
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
-  private LocationFactory locationFactory;
+  protected LocationFactory locationFactory;
   protected NamespaceAdmin namespaceAdmin;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
