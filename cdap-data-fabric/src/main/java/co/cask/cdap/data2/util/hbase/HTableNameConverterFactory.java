@@ -16,10 +16,28 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+
+import javax.annotation.Nullable;
+
 /**
  * Factory for HBase version-specific {@link HTableNameConverterFactory} instances.
  */
 public class HTableNameConverterFactory extends HBaseVersionSpecificFactory<HTableNameConverter> {
+
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+
+  public HTableNameConverterFactory(@Nullable NamespaceQueryAdmin namespaceQueryAdmin) {
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+  }
+
+  @Override
+  protected HTableNameConverter createInstance(String className) throws ClassNotFoundException {
+    HTableNameConverter hTableNameConverter = super.createInstance(className);
+    hTableNameConverter.setNamespaceQueryAdmin(namespaceQueryAdmin);
+    return hTableNameConverter;
+  }
+
   @Override
   protected String getHBase96Classname() {
     return "co.cask.cdap.data2.util.hbase.HTable96NameConverter";

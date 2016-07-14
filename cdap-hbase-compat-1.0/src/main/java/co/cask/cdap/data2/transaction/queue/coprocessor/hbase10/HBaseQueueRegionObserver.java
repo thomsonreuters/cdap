@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.queue.coprocessor.hbase10;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
@@ -26,6 +27,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCach
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableId;
 import co.cask.cdap.data2.util.hbase.HTable10NameConverter;
 import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.persist.TransactionVisibilityState;
@@ -94,14 +96,14 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       }
 
       HTable10NameConverter nameConverter = new HTable10NameConverter();
-      namespaceId = nameConverter.from(tableDesc).getNamespace().getId();
+      namespaceId = nameConverter.from(tableDesc).getHbaseNamespace();
       appName = HBaseQueueAdmin.getApplicationName(hTableName);
       flowName = HBaseQueueAdmin.getFlowName(hTableName);
 
       Configuration conf = env.getConfiguration();
-      String hbaseNamespacePrefix = nameConverter.getNamespacePrefix(tableDesc);
+      String hbaseNamespacePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
-      final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(tableDesc);
+      final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(hbaseNamespacePrefix);
       txStateCache = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf).get();
       txSnapshotSupplier = new Supplier<TransactionVisibilityState>() {
         @Override
@@ -109,7 +111,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           return txStateCache.getLatestState();
         }
       };
-      configTableName = nameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId);
+      configTableName = nameConverter.toTableName(hbaseNamespacePrefix, new HBaseTableId(
+        queueConfigTableId.getNamespace().getId(), queueConfigTableId.getTableName()));
       cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
       configCache = createConfigCache(env);
     }

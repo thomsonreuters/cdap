@@ -43,8 +43,6 @@ import java.util.List;
  */
 public class HBase10CDH550TableUtil extends HBaseTableUtil {
 
-  private final HTable10CDH550NameConverter nameConverter = new HTable10CDH550NameConverter();
-
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");

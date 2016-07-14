@@ -65,18 +65,7 @@ public final class DistributedStorageProviderNamespaceAdmin extends StorageProvi
     // create filesystem directory
     super.create(namespaceId, namespaceConfig);
     // TODO: CDAP-1519: Create base directory for filesets under namespace home
-
-    if (Strings.isNullOrEmpty(namespaceConfig.getHbaseNamespace())) {
-      // no custom namespace location was provided, hence one must be created by cdap
-      tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceId);
-    } else {
-      // a custom namespace was provided, so we expect it to exist. if not throw an exception
-      if (!tableUtil.hasNamespace(getAdmin(), Id.Namespace.from(namespaceConfig.getHbaseNamespace()))) {
-        throw new IOException(String.format("Provided HBase Namespace '%s' for namespace '%s' doesn't exist. Please" +
-                                              "create the namespace on HBase and then try creating a CDAP namespace.",
-                                            namespaceConfig.getHbaseNamespace(), namespaceId.getId()));
-      }
-    }
+    tableUtil.createNamespaceIfNotExists(getAdmin(), namespaceId);
   }
 
   @Override

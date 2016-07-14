@@ -18,7 +18,6 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +42,7 @@ import java.util.Map;
  */
 public class ConfigurationTable {
   /**
-   * Defines the types of configurations to save in the table.  Each type is used as a row key.
+   * Defines the types of configurations to save in the table. Each type is used as a row key.
    */
   public enum Type {
     DEFAULT
@@ -69,22 +68,22 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while writing the configuration
    */
   public void write(Type type, CConfiguration cConf) throws IOException {
-    TableId tableId = TableId.from(Id.Namespace.SYSTEM, TABLE_NAME);
     // must create the table if it doesn't exist
     HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
     try {
-      HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
+      HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf, null).get();
+      HBaseTableId hBaseTableId = tableUtil.createHTableId(Id.Namespace.SYSTEM, TABLE_NAME);
+      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(hBaseTableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
-      tableUtil.createTableIfNotExists(admin, tableId, htd.build());
+      tableUtil.createTableIfNotExists(admin, hBaseTableId, htd.build());
 
       long now = System.currentTimeMillis();
       long previous = now - 1;
       byte[] typeBytes = Bytes.toBytes(type.name());
       LOG.info("Writing new config row with key " + type);
       // populate the configuration data
-      table = tableUtil.createHTable(hbaseConf, tableId);
+      table = tableUtil.createHTable(hbaseConf, hBaseTableId);
       table.setAutoFlush(false);
       Put p = new Put(typeBytes);
       for (Map.Entry<String, String> e : cConf) {

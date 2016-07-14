@@ -47,8 +47,6 @@ import java.util.List;
  */
 public class HBase10TableUtil extends HBaseTableUtil {
 
-  private final HTable10NameConverter nameConverter = new HTable10NameConverter();
-
   @Override
   public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");

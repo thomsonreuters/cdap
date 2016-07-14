@@ -19,6 +19,7 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -54,11 +55,13 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final DatasetFramework dsFramework;
   private final Pattern defaultNSUserTablePrefix;
   private final String datasetTablePrefix;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                   NamespacedLocationFactory namespacedLocationFactory,
-                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework) {
+                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
+                  NamespaceQueryAdmin namespaceQueryAdmin) {
 
     super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
@@ -69,6 +72,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.datasetTablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*",
                                                                   datasetTablePrefix));
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Override
@@ -102,7 +106,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
 
   private void upgradeUserTable(HTableDescriptor desc) throws IOException {
-    HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
+    HTableNameConverter hTableNameConverter = new HTableNameConverterFactory(namespaceQueryAdmin).get();
     TableId tableId = hTableNameConverter.from(desc);
     LOG.info("Upgrading hbase table: {}, desc: {}", tableId, desc);
 
