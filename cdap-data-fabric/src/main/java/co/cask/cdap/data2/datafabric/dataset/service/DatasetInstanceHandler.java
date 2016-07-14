@@ -25,6 +25,7 @@ import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
@@ -81,6 +82,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("namespace-id") String namespaceId,
                   @PathParam("name") String name,
                   @QueryParam("owner") List<String> owners) throws Exception {
+    String userId = SecurityRequestContext.getUserId();
+    if (userId == null && request.containsHeader(Constants.Security.Headers.USER_ID)) {
+      userId = request.getHeader(Constants.Security.Headers.USER_ID);
+    }
+    List<String> headers = request.getHeaders(Constants.Security.Headers.USER_ID);
     responder.sendJson(HttpResponseStatus.OK,
                        instanceService.get(ConversionHelpers.toDatasetInstanceId(namespaceId, name),
                                            ConversionHelpers.strings2ProgramIds(owners)),

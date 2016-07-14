@@ -52,6 +52,8 @@ import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -59,6 +61,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Threads;
@@ -96,6 +100,11 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+
+    // TODO: Refactor to use injector for everything
+    Injector injector = Guice.createInjector(
+      new AuthorizationEnforcementModule()
+    );
 
     // Starting DatasetService service
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
@@ -138,8 +147,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, mdsFramework),
       new LocalDatasetOpExecutor(cConf, discoveryService, opExecutorService),
       exploreFacade,
-      cConf,
-      NAMESPACE_STORE);
+      NAMESPACE_STORE,
+      injector.getInstance(AuthorizationEnforcementService.class));
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf,
@@ -154,8 +163,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
-                                 NAMESPACE_STORE
-    );
+                                 NAMESPACE_STORE,
+                                 injector.getInstance(AuthorizationEnforcementService.class));
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

@@ -52,6 +52,7 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -142,14 +143,7 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException expected) {
       // expected
     }
-    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
-    Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
-    namespaceAdmin.create(AUTH_NAMESPACE_META);
-    // create should grant all privileges
-    Assert.assertEquals(
-      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
-      authorizer.listPrivileges(ALICE)
-    );
+    createAuthNamespace();
     // No authorization currently for listing and retrieving namespace
     namespaceAdmin.list();
     namespaceAdmin.get(AUTH_NAMESPACE.toId());
@@ -177,12 +171,6 @@ public class AuthorizationTest extends TestBase {
     );
     NamespaceMeta updated = new NamespaceMeta.Builder(AUTH_NAMESPACE_META).setDescription("new desc").build();
     namespaceAdmin.updateProperties(AUTH_NAMESPACE.toId(), updated);
-    namespaceAdmin.delete(AUTH_NAMESPACE.toId());
-    // once the namespace has been deleted, privileges on that namespace should be revoked
-    Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
-    // revoke alice's ADMIN privilege on the instance, so we get back to the same state as at the beginning of the test
-    authorizer.revoke(instance);
-    Assert.assertEquals(ImmutableSet.of(), authorizer.listPrivileges(ALICE));
   }
 
   @Test
@@ -194,13 +182,8 @@ public class AuthorizationTest extends TestBase {
     } catch (RuntimeException e) {
       Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
     }
+    createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
-    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
-    getNamespaceAdmin().create(AUTH_NAMESPACE_META);
-    Assert.assertEquals(
-      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
-      authorizer.listPrivileges(ALICE)
-    );
     // deployment should succeed in the authorized namespace because alice has all privileges on it
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), DummyApp.class);
     // alice should get all privileges on the app after deployment succeeds
@@ -348,12 +331,6 @@ public class AuthorizationTest extends TestBase {
       ),
       authorizer.listPrivileges(ALICE)
     );
-    // clean up. remove the namespace. all privileges on the namespace should be revoked
-    getNamespaceAdmin().delete(AUTH_NAMESPACE.toId());
-    Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
-    // revoke privileges on the instance
-    authorizer.revoke(instance);
-    Assert.assertEquals(ImmutableSet.of(), authorizer.listPrivileges(ALICE));
   }
 
   @Test
@@ -379,13 +356,8 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
     // create a new namespace, alice should get ALL privileges on the namespace
+    createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
-    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
-    getNamespaceAdmin().create(AUTH_NAMESPACE_META);
-    Assert.assertEquals(
-      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
-      authorizer.listPrivileges(ALICE)
-    );
     // artifact deployment in this namespace should now succeed, and alice should have ALL privileges on the artifacts
     ArtifactId appArtifactId = new ArtifactId(AUTH_NAMESPACE.getNamespace(), appArtifactName, appArtifactVersion);
     ArtifactManager appArtifactManager = addAppArtifact(appArtifactId, ConfigTestApp.class);
@@ -454,23 +426,12 @@ public class AuthorizationTest extends TestBase {
       ),
       authorizer.listPrivileges(ALICE)
     );
-    // clean up. remove the namespace. all privileges on the namespace should be revoked
-    getNamespaceAdmin().delete(AUTH_NAMESPACE.toId());
-    Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
-    // revoke privileges on the instance
-    authorizer.revoke(instance);
-    Assert.assertEquals(ImmutableSet.of(), authorizer.listPrivileges(ALICE));
   }
 
   @Test
   public void testPrograms() throws Exception {
+    createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
-    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
-    getNamespaceAdmin().create(AUTH_NAMESPACE_META);
-    Assert.assertEquals(
-      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
-      authorizer.listPrivileges(ALICE)
-    );
     final ApplicationManager dummyAppManager = deployApplication(AUTH_NAMESPACE.toId(), DummyApp.class);
     ArtifactSummary dummyArtifactSummary = dummyAppManager.getInfo().getArtifact();
     ArtifactId dummyArtifact = AUTH_NAMESPACE.artifact(dummyArtifactSummary.getName(),
@@ -551,8 +512,20 @@ public class AuthorizationTest extends TestBase {
       ),
       authorizer.listPrivileges(ALICE)
     );
+  }
+
+  @Test
+  public void testDatasets() throws Exception {
+    createAuthNamespace();
+  }
+
+  @After
+  public void cleanupTest() throws Exception {
+    Authorizer authorizer = getAuthorizer();
+    // clean up. remove the namespace. all privileges on the namespace should be revoked
     getNamespaceAdmin().delete(AUTH_NAMESPACE.toId());
-    // revoke alice's ADMIN privilege on the instance, so we get back to the same state as at the beginning of the test
+    Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
+    // revoke privileges on the instance
     authorizer.revoke(instance);
     Assert.assertEquals(ImmutableSet.of(), authorizer.listPrivileges(ALICE));
   }
@@ -563,5 +536,15 @@ public class AuthorizationTest extends TestBase {
     // on default namespace in TestBase so it can clean the namespace.
     SecurityRequestContext.setUserId(OLD_USER);
     finish();
+  }
+
+  private void createAuthNamespace() throws Exception {
+    Authorizer authorizer = getAuthorizer();
+    authorizer.grant(instance, ALICE, ImmutableSet.of(Action.ADMIN));
+    getNamespaceAdmin().create(AUTH_NAMESPACE_META);
+    Assert.assertEquals(
+      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
+      authorizer.listPrivileges(ALICE)
+    );
   }
 }

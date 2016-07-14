@@ -53,6 +53,8 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -142,7 +144,8 @@ public abstract class DatasetServiceTestBase {
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new TransactionInMemoryModule());
+      new TransactionInMemoryModule(),
+      new AuthorizationEnforcementModule());
 
     // Tx Manager to support working with datasets
     txManager = injector.getInstance(TransactionManager.class);
@@ -197,8 +200,8 @@ public abstract class DatasetServiceTestBase {
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework),
       new InMemoryDatasetOpExecutor(dsFramework),
       exploreFacade,
-      cConf,
-      namespaceStore);
+      namespaceStore,
+      injector.getInstance(AuthorizationEnforcementService.class));
 
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
@@ -210,7 +213,9 @@ public abstract class DatasetServiceTestBase {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade), namespaceStore);
+                                                                        exploreFacade),
+                                 namespaceStore,
+                                 injector.getInstance(AuthorizationEnforcementService.class));
 
     // Start dataset service, wait for it to be discoverable
     service.start();

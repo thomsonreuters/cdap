@@ -117,6 +117,9 @@ public class DefaultAuthorizationEnforcementService extends AbstractScheduledSer
       authorizerInstantiator.get().enforce(entity, principal, action);
       return;
     }
+    if (Principal.SYSTEM.equals(principal)) {
+      return;
+    }
     Set<Privilege> privileges = authPolicyCache.get(principal);
     if (!privileges.contains(new Privilege(entity, action))) {
       throw new UnauthorizedException(principal, action, entity);

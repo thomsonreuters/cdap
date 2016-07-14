@@ -62,9 +62,8 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
-import co.cask.cdap.security.authorization.DefaultAuthorizationEnforcementService;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Charsets;
@@ -434,6 +433,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
       new AuthorizationModule(),
+      new AuthorizationEnforcementModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -458,13 +458,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
           // For binding StreamWriter
           install(createStreamFactoryModule());
-
-          // also bind AuthorizationEnforcementService as a singleton. This binding is used while starting/stopping
-          // the service itself.
-          bind(AuthorizationEnforcementService.class).to(DefaultAuthorizationEnforcementService.class)
-            .in(Scopes.SINGLETON);
-          // bind AuthorizationEnforcer to AuthorizationEnforcementService
-          bind(AuthorizationEnforcer.class).to(AuthorizationEnforcementService.class).in(Scopes.SINGLETON);
         }
       }
     );
