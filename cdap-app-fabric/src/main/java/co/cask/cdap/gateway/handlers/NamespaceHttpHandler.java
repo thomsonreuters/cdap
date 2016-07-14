@@ -25,8 +25,16 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.InstanceId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -50,11 +58,16 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final CConfiguration cConf;
   private final NamespaceAdmin namespaceAdmin;
+  private final AuthorizerInstantiator authorizerInstantiator;
+  private final InstanceId instanceId;
 
   @Inject
-  NamespaceHttpHandler(CConfiguration cConf, NamespaceAdmin namespaceAdmin) {
+  NamespaceHttpHandler(CConfiguration cConf, NamespaceAdmin namespaceAdmin,
+                       AuthorizerInstantiator authorizerInstantiator) {
     this.cConf = cConf;
     this.namespaceAdmin = namespaceAdmin;
+    this.authorizerInstantiator = authorizerInstantiator;
+    this.instanceId = createInstanceId(cConf);
   }
 
   @GET
@@ -85,11 +98,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId)
     throws Exception {
-    Id.Namespace namespace;
-    try {
-      namespace = Id.Namespace.from(namespaceId);
-    } catch (IllegalArgumentException e) {
+    if (!NamespaceId.isValidNamespaceId(namespaceId)) {
       throw new BadRequestException("Namespace id can contain only alphanumeric characters or '_'.");
+    }
+    NamespaceId namespace = new NamespaceId(namespaceId);
+    Principal principal = SecurityRequestContext.toPrincipal();
+    // Skip authorization enforcement for the system user and the default namespace, so the DefaultNamespaceEnsurer
+    // thread can successfully create the default namespace
+    if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
+      authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     }
 
     NamespaceMeta metadata;
@@ -104,7 +121,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
                                                   namespaceId, namespaceId));
     }
 
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespace);
+    NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespace.toId());
 
     // Handle optional params
     if (metadata != null) {
@@ -162,5 +179,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private boolean isReserved(String namespaceId) {
     return Id.Namespace.DEFAULT.getId().equals(namespaceId) || Id.Namespace.SYSTEM.getId().equals(namespaceId) ||
       Id.Namespace.CDAP.getId().equals(namespaceId);
+  }
+
+  private InstanceId createInstanceId(CConfiguration cConf) {
+    String instanceName = cConf.get(Constants.INSTANCE_NAME);
+    Preconditions.checkArgument(NamespaceId.isValidNamespaceId(instanceName),
+                                "CDAP instance name specified by '%s' in cdap-site.xml should be alphanumeric " +
+                                  "(underscores allowed). Its current invalid value is '%s'",
+                                Constants.INSTANCE_NAME, instanceName);
+    return new InstanceId(instanceName);
   }
 }

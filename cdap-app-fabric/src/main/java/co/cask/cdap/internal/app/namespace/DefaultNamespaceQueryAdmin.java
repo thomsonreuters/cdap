@@ -34,7 +34,7 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
   protected final NamespaceStore nsStore;
 
   @Inject
-  public DefaultNamespaceQueryAdmin(NamespaceStore nsStore) {
+  DefaultNamespaceQueryAdmin(NamespaceStore nsStore) {
     this.nsStore = nsStore;
   }
 

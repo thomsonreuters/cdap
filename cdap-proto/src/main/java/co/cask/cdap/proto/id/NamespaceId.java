@@ -21,6 +21,7 @@ import co.cask.cdap.proto.element.EntityType;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Uniquely identifies a namespace.
@@ -30,6 +31,8 @@ public class NamespaceId extends EntityId {
 
   public static final NamespaceId DEFAULT = new NamespaceId("default");
   public static final NamespaceId SYSTEM = new NamespaceId("system");
+  // Only allow alphanumeric and _ character for namespace
+  private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
 
   public NamespaceId(String namespace) {
     super(EntityType.NAMESPACE);
@@ -96,5 +99,9 @@ public class NamespaceId extends EntityId {
 
   public static NamespaceId fromString(String string) {
     return EntityId.fromString(string, NamespaceId.class);
+  }
+
+  public static boolean isValidNamespaceId(String name) {
+    return namespacePattern.matcher(name).matches();
   }
 }

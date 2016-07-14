@@ -79,7 +79,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
   private final AuthorizerInstantiator authorizerInstantiator;
-  private final InstanceId instanceId;
+
   private final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
 
   @Inject
@@ -104,7 +104,6 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
     this.authorizerInstantiator = authorizerInstantiator;
-    this.instanceId = createInstanceId(cConf);
   }
 
   /**
@@ -120,14 +119,6 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     NamespaceId namespace = new NamespaceId(metadata.getName());
     if (exists(namespace.toId())) {
       throw new NamespaceAlreadyExistsException(namespace.toId());
-    }
-
-    // Namespace can be created. Check if the user is authorized now.
-    Principal principal = SecurityRequestContext.toPrincipal();
-    // Skip authorization enforcement for the system user and the default namespace, so the DefaultNamespaceEnsurer
-    // thread can successfully create the default namespace
-    if (!(Principal.SYSTEM.equals(principal) && NamespaceId.DEFAULT.equals(namespace))) {
-      authorizerInstantiator.get().enforce(instanceId, principal, Action.ADMIN);
     }
 
     try {
@@ -279,14 +270,5 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       }
     });
     return !Iterables.isEmpty(runtimeInfos);
-  }
-
-  private InstanceId createInstanceId(CConfiguration cConf) {
-    String instanceName = cConf.get(Constants.INSTANCE_NAME);
-    Preconditions.checkArgument(namespacePattern.matcher(instanceName).matches(),
-                                "CDAP instance name specified by '%s' in cdap-site.xml should be alphanumeric " +
-                                  "(underscores allowed). Its current invalid value is '%s'",
-                                Constants.INSTANCE_NAME, instanceName);
-    return new InstanceId(instanceName);
   }
 }
