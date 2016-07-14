@@ -83,31 +83,27 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
   private void join(Map<String, List<JoinElement<INPUT_RECORD>>> perStageJoinElements, Set<String> requiredInputs)
     throws Exception {
     List<List<JoinElement<INPUT_RECORD>>> list = new ArrayList<>(perStageJoinElements.values());
-    ArrayList<JoinElement<INPUT_RECORD>> joinElements = new ArrayList<>();
-    Set<String> includedInputs = new HashSet<>();
-    getCartesianProduct(list, 0, joinElements, includedInputs, requiredInputs);
+    ArrayList<JoinElement<INPUT_RECORD>> joinRow = new ArrayList<>();
+    Set<String> joinRowInputs = new HashSet<>();
+    getCartesianProduct(list, 0, joinRow, joinRowInputs, requiredInputs);
   }
 
   // TODO use iterative algorithm instead of recursion
   private void getCartesianProduct(List<List<JoinElement<INPUT_RECORD>>> list, int index,
-                                   List<JoinElement<INPUT_RECORD>> joinElements,
-                                   Set<String> includedInputs, Set<String> requiredInputs) throws Exception {
+                                   List<JoinElement<INPUT_RECORD>> joinRow,
+                                   Set<String> joinRowInputs, Set<String> requiredInputs) throws Exception {
     // check till the end of the list and emit only if records from all the required inputs are present in joinElements
-    if (index == list.size() && includedInputs.equals(requiredInputs)) {
-      emitter.emit(joiner.merge(joinKey, joinElements));
+    if (index == list.size() && joinRowInputs.containsAll(requiredInputs)) {
+      emitter.emit(joiner.merge(joinKey, joinRow));
       return;
     }
 
     for (JoinElement<INPUT_RECORD> joinElement : list.get(index)) {
-      joinElements.add(joinElement);
-      if (requiredInputs.contains(joinElement.getStageName())) {
-        includedInputs.add(joinElement.getStageName());
-      }
-      getCartesianProduct(list, index + 1, joinElements, includedInputs, requiredInputs);
-      joinElements.remove(joinElements.size() - 1);
-      if (requiredInputs.contains(joinElement.getStageName())) {
-        includedInputs.remove(joinElement.getStageName());
-      }
+      joinRow.add(joinElement);
+      joinRowInputs.add(joinElement.getStageName());
+      getCartesianProduct(list, index + 1, joinRow, joinRowInputs, requiredInputs);
+      joinRow.remove(joinRow.size() - 1);
+      joinRowInputs.remove(joinElement.getStageName());
     }
   }
 }
