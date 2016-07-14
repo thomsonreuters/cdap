@@ -31,7 +31,7 @@ public class HTable96NameConverter extends HTableNameConverter {
   }
 
   @Override
-  public TableName toTableName(String tablePrefix, HBaseTableId tableId) {
-    return TableName.valueOf(tableId.getHbaseNamespace(), getHBaseTableName(tablePrefix, tableId));
+  public TableName toTableName(String prefix, HBaseTableId tableId) {
+    return TableName.valueOf(tableId.getHbaseNamespace(), getHBaseTableName(prefix, tableId));
   }
 }

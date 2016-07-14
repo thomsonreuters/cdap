@@ -30,7 +30,7 @@ import java.net.URLEncoder;
  */
 public abstract class HTableNameConverter {
 
-  private String encodeHBaseEntity(String entityName) {
+  public String encodeHBaseEntity(String entityName) {
     try {
       return URLEncoder.encode(entityName, "ASCII");
     } catch (UnsupportedEncodingException e) {
