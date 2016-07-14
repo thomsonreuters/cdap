@@ -26,7 +26,6 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
@@ -39,25 +38,32 @@ import java.util.List;
  * @param <T> the type of the parent configurer
  */
 public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder & WorkflowForkJoiner>
-  extends DefaultPluginConfigurer implements WorkflowConditionConfigurer<T>, WorkflowConditionAdder,
-  WorkflowForkJoiner {
+  implements WorkflowConditionConfigurer<T>, WorkflowConditionAdder, WorkflowForkJoiner {
 
   private final T parentConfigurer;
   private final List<WorkflowNode> ifBranch = Lists.newArrayList();
   private final List<WorkflowNode> elseBranch = Lists.newArrayList();
-  private List<WorkflowNode> currentBranch;
-  private boolean addingToIfBranch = true;
   private final String predicateClassName;
   private final String conditionNodeName;
+  private final Id.Namespace deployNamespace;
+  private final Id.Artifact artifactId;
+  private final ArtifactRepository artifactRepository;
+  private final PluginInstantiator pluginInstantiator;
+
+  private List<WorkflowNode> currentBranch;
+  private boolean addingToIfBranch = true;
 
   public DefaultWorkflowConditionConfigurer(String conditionNodeName, T parentConfigurer, String predicateClassName,
                                             Id.Namespace deployNamespace, Id.Artifact artifactId,
                                             ArtifactRepository artifactRepository,
                                             PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.conditionNodeName = conditionNodeName;
     this.parentConfigurer = parentConfigurer;
     this.predicateClassName = predicateClassName;
+    this.deployNamespace = deployNamespace;
+    this.artifactId = artifactId;
+    this.artifactRepository = artifactRepository;
+    this.pluginInstantiator = pluginInstantiator;
     currentBranch = Lists.newArrayList();
   }
 

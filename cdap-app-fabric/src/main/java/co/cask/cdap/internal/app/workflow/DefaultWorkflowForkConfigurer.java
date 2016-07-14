@@ -26,7 +26,6 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
@@ -39,18 +38,25 @@ import java.util.List;
  * @param <T>
  */
 public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & WorkflowConditionAdder>
-  extends DefaultPluginConfigurer implements WorkflowForkConfigurer<T>, WorkflowForkJoiner, WorkflowConditionAdder {
+  implements WorkflowForkConfigurer<T>, WorkflowForkJoiner, WorkflowConditionAdder {
 
   private final T parentForkConfigurer;
-
   private final List<List<WorkflowNode>> branches = Lists.newArrayList();
+  private final Id.Namespace deployNamespace;
+  private final Id.Artifact artifactId;
+  private final ArtifactRepository artifactRepository;
+  private final PluginInstantiator pluginInstantiator;
+
   private List<WorkflowNode> currentBranch;
 
   public DefaultWorkflowForkConfigurer(T parentForkConfigurer, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                        ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.parentForkConfigurer = parentForkConfigurer;
     currentBranch = Lists.newArrayList();
+    this.deployNamespace = deployNamespace;
+    this.artifactId = artifactId;
+    this.artifactRepository = artifactRepository;
+    this.pluginInstantiator = pluginInstantiator;
   }
 
   @Override
