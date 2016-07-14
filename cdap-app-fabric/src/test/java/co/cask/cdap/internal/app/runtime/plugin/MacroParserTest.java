@@ -88,7 +88,7 @@ public class MacroParserTest {
                        "${42}${brackets}${one}ahead");
   }
 
-  // TODO: Get this working
+  // TODO: Get this working (doubly-escaping)
   @Ignore
   public void testEscapingOfEscaping() throws InvalidMacroException {
     assertSubstitution("\\file\\path\\name\\\\${filePathMacro}", "\\file\\path\\name\\executable.exe");

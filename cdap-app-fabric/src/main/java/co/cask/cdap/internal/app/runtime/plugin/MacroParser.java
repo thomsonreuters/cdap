@@ -59,12 +59,13 @@ public final class MacroParser {
   }
 
   /**
-   * Substitutes the provided string with a given macro evaluator
+   * Substitutes the provided string with a given macro evaluator. Expands macros from right-to-left recursively.
    * @param str the raw string containing macro syntax
    * @param macroEvaluator the evaluator used to substitute macros
    * @return the original string with all macros expanded and substituted
    */
   public static String substituteMacro(String str, MacroEvaluator macroEvaluator) {
+    // final string has escapes not directly embedded in macro syntax replaced
     return replaceEscapedSyntax(substituteMacro(str, 0, macroEvaluator, null));
   }
 
@@ -75,7 +76,7 @@ public final class MacroParser {
                                                     str, MAX_SUBSTITUTION_DEPTH));
     }
     MacroMetadata macroPosition = findRightmostMacro(str, macroEvaluator, macros);
-    while (macroPosition != null) { // loop through all macros at the current level
+    while (macroPosition != null) {
       try {
         str = str.substring(0, macroPosition.startIndex) +
           substituteMacro(macroPosition.substitution, depth + 1, macroEvaluator, macros) +
@@ -103,9 +104,9 @@ public final class MacroParser {
   private static MacroMetadata findRightmostMacro(String str, @Nullable MacroEvaluator macroEvaluator,
                                                   @Nullable Set<String> macros) {
     int startIndex = str.lastIndexOf("${");
-    // skip all escaped syntax '\${
+    // skip all escaped syntax '\${'
     while (startIndex > 0 && str.charAt(startIndex - 1) == '\\') {
-      // allow escaping of escaping syntax \\${'
+      // allow escaping of escaping syntax '\\${'
       if (startIndex > 1 && str.charAt(startIndex - 2) == '\\') {
         break;
       }
@@ -119,6 +120,7 @@ public final class MacroParser {
     // found "${", now look for enclosing "}" and allow escaping through \}
     int endIndex = str.indexOf('}', startIndex);
     while (endIndex > 0 && str.charAt(endIndex - 1) == '\\') {
+      // allow escaping of escaping syntax '\\}'
       if (endIndex > 1 && str.charAt(endIndex - 2) == '\\') {
         break;
       }
@@ -138,6 +140,10 @@ public final class MacroParser {
     // look for '(', which indicates there are arguments and skip all escaped syntax '\('
     int argsStartIndex = macroStr.indexOf('(');
     while (argsStartIndex > 0 && str.charAt(argsStartIndex - 1) == '\\') {
+      // allow escaping of escaping syntax '\\('
+      if (argsStartIndex > 1 && str.charAt(argsStartIndex - 2) == '\\') {
+        break;
+      }
       argsStartIndex = macroStr.indexOf('(', argsStartIndex);
     }
 
@@ -155,6 +161,7 @@ public final class MacroParser {
         throw new InvalidMacroException(String.format("Could not find enclosing ')' for macro arguments in '%s'.",
                                                       macroStr));
       }
+      // arguments and macroFunction are expected to have escapes replaced when being evaluated
       arguments = replaceEscapedSyntax(macroStr.substring(argsStartIndex + 1, macroStr.length() - 1));
       String macroFunction = replaceEscapedSyntax(macroStr.substring(0, argsStartIndex));
       if (macros != null) {
@@ -164,6 +171,7 @@ public final class MacroParser {
       return new MacroMetadata(macroEvaluator != null ? macroEvaluator.evaluate(macroFunction, args) :
                                  replaceEscapedSyntax(macroStr), startIndex, endIndex);
     } else {
+      // property is expected to have escapes replaced when being evaluated
       arguments = replaceEscapedSyntax(macroStr);
       if (macros != null) {
         macros.add(arguments);
@@ -187,7 +195,6 @@ public final class MacroParser {
   }
 
   private static final class MacroMetadata {
-    @Nullable
     private final String substitution;
     private final int startIndex;
     private final int endIndex;
