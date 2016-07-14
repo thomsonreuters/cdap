@@ -36,7 +36,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
@@ -113,7 +112,6 @@ public abstract class AbstractDatasetFrameworkTest {
   protected static CConfiguration cConf;
   protected static TransactionExecutorFactory txExecutorFactory;
   protected static InMemoryAuditPublisher inMemoryAuditPublisher;
-  protected static NamespacedLocationFactory namespacedLocationFactory;
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -141,7 +139,6 @@ public abstract class AbstractDatasetFrameworkTest {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }
 
@@ -412,11 +409,14 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
-  public void testNamespaceCreationDeletion() throws DatasetManagementException {
+  public void testNamespaceCreationDeletion() throws Exception {
     DatasetFramework framework = getFramework();
 
     Id.Namespace namespace = Id.Namespace.from("yourspace");
-    framework.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+    NamespaceMeta yourspaceMeta = new NamespaceMeta.Builder().setName(namespace).build();
+    framework.createNamespace(yourspaceMeta);
+    // framework.delete uses namespace query admin to look up namespace meta so add the meta to that too
+    namespaceAdmin.create(yourspaceMeta);
     framework.deleteNamespace(namespace);
   }
 

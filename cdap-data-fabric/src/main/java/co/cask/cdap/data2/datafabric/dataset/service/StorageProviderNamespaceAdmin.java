@@ -81,7 +81,7 @@ public class StorageProviderNamespaceAdmin {
                                             namespaceHome, namespaceId));
       }
     } else {
-      namespaceHome = namespacedLocationFactory.getBaseLocation().append(namespaceConfig.getHbaseNamespace());
+      namespaceHome = namespacedLocationFactory.getBaseLocation().append(namespaceConfig.getRootDirectory());
       // a custom location was provided so we expect it to exists
       if (!namespaceHome.exists()) {
         throw new IOException(String.format("The provided home directory '%s' for namespace '%s' does exists. Please " +

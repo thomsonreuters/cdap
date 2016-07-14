@@ -125,7 +125,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
                                                           "location %s. Custom location must be absolute path.",
                                                         namespaceId, config.getRootDirectory()));
           }
-          builder.setHdfsDirectory(config.getRootDirectory());
+          builder.setRootDirectory(config.getRootDirectory());
         }
         if (!Strings.isNullOrEmpty(config.getHbaseNamespace())) {
           builder.setHbaseNamespace(config.getHbaseNamespace());

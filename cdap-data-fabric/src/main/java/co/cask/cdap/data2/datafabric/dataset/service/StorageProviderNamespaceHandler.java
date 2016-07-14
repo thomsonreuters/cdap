@@ -27,16 +27,11 @@ import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.sql.SQLException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PUT;
@@ -48,7 +43,7 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class StorageProviderNamespaceHandler extends AbstractHttpHandler {
-  private static final Gson GSON = new GsonBuilder().create();
+  private static final Gson GSON = new Gson();
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
 
   @Inject
@@ -80,10 +75,10 @@ public class StorageProviderNamespaceHandler extends AbstractHttpHandler {
       return;
     } catch (UnauthenticatedException e) {
       responder.sendString(HttpResponseStatus.UNAUTHORIZED,
-                           "Error while deleting namespace - " + e.getMessage());
+                           "Error while creating namespace - " + e.getMessage());
     } catch (NamespaceNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           "Error while deleting namespace - " + e.getMessage());
+                           "Error while creating namespace - " + e.getMessage());
     }
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Created namespace %s successfully", namespaceId));

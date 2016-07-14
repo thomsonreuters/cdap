@@ -22,6 +22,8 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -108,6 +110,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
 
     LocalLocationFactory locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+    NamespacedLocationFactory namespacedLocationFactory = new NamespacedLocationFactoryTestClient(cConf,
+                                                                                                  locationFactory);
     framework = new RemoteDatasetFramework(cConf, discoveryService, registryFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
@@ -167,8 +171,14 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     startLatch.await(5, TimeUnit.SECONDS);
 
-    framework.createNamespace(new NamespaceMeta.Builder().setName(Id.Namespace.SYSTEM).build());
-    framework.createNamespace(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
+
+    // the framework.delete looks up namespace config through namespaceadmin add the meta there too.
+    NamespaceMeta systemMeta = new NamespaceMeta.Builder().setName(Id.Namespace.SYSTEM).build();
+    framework.createNamespace(systemMeta);
+    namespaceAdmin.create(systemMeta);
+    NamespaceMeta name = new NamespaceMeta.Builder().setName(NAMESPACE_ID).build();
+    framework.createNamespace(name);
+    namespaceAdmin.create(name);
   }
 
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
@@ -200,9 +210,13 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   }
 
   @After
-  public void after() throws DatasetManagementException {
+  public void after() throws Exception {
+    // since we stored namespace meta through admin so that framework.delete can lookup namespaceconfig clean the
+    // meta from there too
     framework.deleteNamespace(NAMESPACE_ID);
+    namespaceAdmin.delete(NAMESPACE_ID);
     framework.deleteNamespace(Id.Namespace.SYSTEM);
+    namespaceAdmin.delete(Id.Namespace.SYSTEM);
     Futures.getUnchecked(Services.chainStop(service, opExecutorService, txManager));
   }
 

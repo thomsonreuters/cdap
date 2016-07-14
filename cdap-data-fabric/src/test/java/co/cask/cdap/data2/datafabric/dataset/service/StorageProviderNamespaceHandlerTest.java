@@ -23,7 +23,6 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,7 +33,7 @@ import java.io.IOException;
  */
 public class StorageProviderNamespaceHandlerTest extends DatasetServiceTestBase {
 
-  private static final Gson GSON = new GsonBuilder().create();
+  private static final Gson GSON = new Gson();
 
   @Test
   public void test() throws Exception {

@@ -58,7 +58,7 @@ public final class NamespaceMeta {
     private String name;
     private String description;
     private String schedulerQueueName;
-    private String hdfsDirectory;
+    private String rootDirectory;
     private String hbaseNamespace;
     private String hiveDatabase;
 
@@ -70,7 +70,7 @@ public final class NamespaceMeta {
       this.name = meta.getName();
       this.description = meta.getDescription();
       this.schedulerQueueName = meta.getConfig().getSchedulerQueueName();
-      this.hdfsDirectory = meta.getConfig().getRootDirectory();
+      this.rootDirectory = meta.getConfig().getRootDirectory();
       this.hbaseNamespace = meta.getConfig().getHbaseNamespace();
       this.hiveDatabase = meta.getConfig().getHiveDatabase();
     }
@@ -95,8 +95,8 @@ public final class NamespaceMeta {
       return this;
     }
 
-    public Builder setHdfsDirectory(final String hdfsDirectory) {
-      this.hdfsDirectory = hdfsDirectory;
+    public Builder setRootDirectory(final String hdfsDirectory) {
+      this.rootDirectory = hdfsDirectory;
       return this;
     }
 
@@ -118,7 +118,7 @@ public final class NamespaceMeta {
         description = "";
       }
 
-      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, hdfsDirectory,
+      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
                                                                       hbaseNamespace, hiveDatabase));
     }
   }

@@ -72,16 +72,10 @@ public final class LocationRuntimeModule extends RuntimeModule {
       return new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
     }
 
-    /**
-     * Provided a RootLocationFactory for in memory use where the root is the data dir. This is because
-     * {@link NamespacedLocationFactory} takes root of the filesystem so that it can create location based on root of
-     * filesystem for custom location mapping if one has been provided. In tests the data dir serves as the root else
-     * the tests will try to create location such as /tmp/somedir which will fail due to lacking privileges.
-     */
     @Provides
     @Singleton
     private RootLocationFactory providesRootLocationFactory(CConfiguration cConf) {
-      return new RootLocationFactory(new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR))));
+      return new RootLocationFactory(new LocalLocationFactory());
     }
   }
 

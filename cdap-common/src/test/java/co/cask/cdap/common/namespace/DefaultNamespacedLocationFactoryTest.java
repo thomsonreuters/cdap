@@ -44,7 +44,7 @@ public class DefaultNamespacedLocationFactoryTest {
 
     Id.Namespace ns1 = Id.Namespace.from("ns1");
     NamespaceMeta defaultNSMeta = new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build();
-    NamespaceMeta ns1NSMeta = new NamespaceMeta.Builder().setName(ns1).setHdfsDirectory("/ns1").build();
+    NamespaceMeta ns1NSMeta = new NamespaceMeta.Builder().setName(ns1).setRootDirectory("/ns1").build();
 
     nsAdmin.create(defaultNSMeta);
     nsAdmin.create(ns1NSMeta);
